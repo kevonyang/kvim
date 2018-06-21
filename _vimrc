@@ -73,7 +73,6 @@ Plugin 'vim-scripts/a.vim'
 "endif
 "let g:neocomplete#keyword_patterns['default']='\h\w*'
 
-"Plugin 'SuperTab'
 Plugin 'dyng/ctrlsf.vim'
 let g:ctrlsf_ackprg='ag'
 let g:ctrlsf_auto_close=0
@@ -101,6 +100,7 @@ set encoding=utf-8
 "set fileencodings=ucs-bom,utf-8,utf-16,gb2312,gbk,big5,gb18030,latin1
 "set fileencodings=ucs-bom,utf-8,gb2312,gbk,big5,gb18030,cp936
 set fileencodings=ucs-bom,utf-8,chinese
+"set nobomb
 
 set langmenu=zh_CN.UTF-8
 let $LANG='zh_CN.UTF-8'
@@ -152,10 +152,13 @@ set cursorline
 set tags=tags;
 "set autochdir
 
-"set guioptions-=m  "menu bar
+set guioptions-=m  "menu bar
 set guioptions-=T  "toolbar
 set guioptions-=r  "scrollbar
 set guioptions-=L
+set guioptions-=e  "tab
+
+set winaltkeys=no
 
 map <silent> <C-j> :resize+5<CR>
 map <silent> <C-k> :resize-5<CR> 
@@ -166,8 +169,8 @@ map <silent> <C-Up> :resize-5<CR>
 map <silent> <C-Down> :resize+5<CR> 
 map <silent> <C-Left> :vertical resize-5<CR>
 map <silent> <C-Right> :vertical resize+5<CR>
-map <silent> <C-tab> :tabn<CR>
 
+map <silent> <C-b> :tabnew<CR>
 map <silent> <C-n> :NERDTreeToggle<CR>
 map <silent> <C-m> :TlistToggle<CR>
 
@@ -193,7 +196,7 @@ function ReloadServer()
 		exec "!reload gas " . expand("%:t")
 	endif
 endfunction
-nmap <S-r> :call ReloadServer()<CR>
+nmap <M-r> :call ReloadServer()<CR>
 
 "server check
 function CheckServer()
@@ -205,11 +208,6 @@ function CheckServer()
 		exec "!check master " . expand("%:t")
 		exec "!check gas " . expand("%:t")
 	endif
-endfunction
-nmap <S-t> :call CheckServer()<CR>
-
-"server check
-function RuntimeCheckServer()
 	if match(expand("%:p"),"master") != -1
 		exec "!runtime_check master " . expand("%:p")
 	elseif match(expand("%:p"),"gas") != -1
@@ -219,14 +217,13 @@ function RuntimeCheckServer()
 		exec "!runtime_check gas " . expand("%:p")
 	endif
 endfunction
-nmap <S-y> :call RuntimeCheckServer()<CR>
-
+nmap <M-c> :call CheckServer()<CR>
 
 "open folder of current file
 function Folder()
 	silent exec "!explorer " . expand("%:h")
 endfunction
-nmap <silent> <S-e> :call Folder()<CR>
+nmap <silent> <M-e> :call Folder()<CR>
 
 "swtich between inc and mgr
 function SwitchInc()
@@ -236,5 +233,4 @@ function SwitchInc()
 		execute "edit " . substitute(expand("%"), '\.lua', 'Inc\.lua', "")
 	endif
 endfunction
-
-nmap <S-a> :call SwitchInc()<CR>
+nmap <M-a> :call SwitchInc()<CR>
