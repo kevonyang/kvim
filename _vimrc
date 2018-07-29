@@ -42,20 +42,44 @@ call vundle#begin('$HOME/vimfiles/bundle/')
 
 " let Vundle manage Vundle, required
 Plugin 'VundleVim/Vundle.vim'
+
 Plugin 'scrooloose/nerdtree'
 let g:NERDTreeChDirMode=2
+
 Plugin 'vim-scripts/taglist.vim'
 let Tlist_Show_One_File=1
 let Tlist_Use_Right_Window=1
 let Tlist_GainFocus_On_ToggleOpen=1
 let Tlist_Close_On_Select=1
+
 Plugin 'ctrlpvim/ctrlp.vim'
 let g:ctrlp_working_path_mode = 'wa'
 let g:ctrlp_custom_ignore={
     \ 'dir':  '\v[\/]\.(git|hg|svn)$',
     \ 'file': '\v\.(exe|so|dll|xls|xlsx|doc|docx|meta|bytes|ppt|pptx|xml|pdb|pem|config|jsx|include|bat|ini|txt|ddef|release|gradle|java|m|cmd)$',
     \ }
-Plugin 'vim-scripts/a.vim'
+
+Plugin 'dyng/ctrlsf.vim'
+let g:ctrlsf_ackprg='ag'
+let g:ctrlsf_absolute_file_path=1
+let g:ctrlsf_auto_close=0
+let g:ctrlsf_case_sensitive='no'
+let g:ctrlsf_default_view_mode='compact'
+let g:ctrlsf_ignore_dir=['tags']
+let g:ctrlsf_default_root='cwd'
+let g:ctrlsf_search_mode='async'
+
+"Plugin 'dkprice/vim-easygrep'
+"let g:EasyGrepCommand=0
+"let g:EasyGrepRoot="cwd"
+"let g:EasyGrepIgnoreCase=1
+"let g:EasyGrepRecursive=1
+"let g:EasyGrepSearchCurrentBufferDir=0
+"let g:EasyGrepFilesToExclude="tags"
+
+"if executable('ag')
+"  set grepprg=ag\ --nogroup\ --nocolor
+"endif
 
 "Plugin 'Shougo/neocomplete.vim'
 "let g:acp_enableAtStartup=0
@@ -73,20 +97,17 @@ Plugin 'vim-scripts/a.vim'
 "endif
 "let g:neocomplete#keyword_patterns['default']='\h\w*'
 
-Plugin 'dyng/ctrlsf.vim'
-let g:ctrlsf_ackprg='ag'
-let g:ctrlsf_auto_close=0
-let g:ctrlsf_case_sensitive='no'
-let g:ctrlsf_default_view_mode='compact'
-let g:ctrlsf_ignore_dir=['tags']
-let g:ctrlsf_default_root='cwd'
+"Plugin 'Valloric/YouCompleteMe'
+"let g:ycm_min_num_of_chars_for_completion=2
+"let g:ycm_semantic_triggers={
+"\ 'c' : ['->', '.'],
+"\ 'lua' : ['.', ':'],
+"\}
 
-Plugin 'Valloric/YouCompleteMe'
-let g:ycm_min_num_of_chars_for_completion=2
-let g:ycm_semantic_triggers={
-			\ 'c' : ['->', '.'],
-			\ 'lua' : ['.', ':'],
-			\}
+Plugin 'ervandew/supertab'
+let g:SuperTabDefaultCompletionType='context'
+
+Plugin 'vim-scripts/a.vim'
 
 " All of your Plugins must be added before the following line
 call vundle#end()            " required
@@ -170,9 +191,9 @@ map <silent> <C-Down> :resize+5<CR>
 map <silent> <C-Left> :vertical resize-5<CR>
 map <silent> <C-Right> :vertical resize+5<CR>
 
-map <silent> <C-b> :tabnew<CR>
-map <silent> <C-n> :NERDTreeToggle<CR>
-map <silent> <C-m> :TlistToggle<CR>
+map <silent> <M-t> :tabnew<CR>
+map <silent> <M-n> :NERDTreeToggle<CR>
+map <silent> <M-l> :TlistToggle<CR>
 
 nmap <C-f> <Plug>CtrlSFCwordPath
 vmap <C-f> <Plug>CtrlSFVwordPath
@@ -184,6 +205,12 @@ vmap <C-f> <Plug>CtrlSFVwordPath
 "nnoremap <C-f>o :CtrlSFOpen<CR>
 "nnoremap <C-f>t :CtrlSFToggle<CR>
 "inoremap <C-f>t <Esc>:CtrlSFToggle<CR>
+
+"run server
+function RunServer()
+	silent exec "!runserver"
+endfunction
+nmap <F5> :call RunServer()<CR>
 
 "server reload, only master and gas
 function ReloadServer()
