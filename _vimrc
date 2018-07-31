@@ -67,7 +67,8 @@ let g:ctrlsf_case_sensitive='no'
 let g:ctrlsf_default_view_mode='compact'
 let g:ctrlsf_ignore_dir=['tags']
 let g:ctrlsf_default_root='cwd'
-let g:ctrlsf_search_mode='async'
+let g:ctrlsf_search_mode='sync'
+"let g:ctrlsf_parse_speed=100
 
 "Plugin 'dkprice/vim-easygrep'
 "let g:EasyGrepCommand=0
