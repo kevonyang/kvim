@@ -37,8 +37,8 @@ set nocompatible              " be iMproved, required
 filetype off                  " required
 
 " set the runtime path to include Vundle and initialize
-set rtp+=$HOME/vimfiles/bundle/Vundle.vim/
-call vundle#begin('$HOME/vimfiles/bundle/')
+set rtp+=$HOME/.vim/bundle/Vundle.vim/
+call vundle#begin('$HOME/.vim/bundle/')
 
 " let Vundle manage Vundle, required
 Plugin 'VundleVim/Vundle.vim'
@@ -61,14 +61,14 @@ let g:ctrlp_custom_ignore={
 
 Plugin 'dyng/ctrlsf.vim'
 let g:ctrlsf_ackprg='ag'
-let g:ctrlsf_absolute_file_path=1
+let g:ctrlsf_absolute_file_path=0
 let g:ctrlsf_auto_close=0
 let g:ctrlsf_case_sensitive='no'
 let g:ctrlsf_default_view_mode='compact'
 let g:ctrlsf_ignore_dir=['tags']
 let g:ctrlsf_default_root='cwd'
-let g:ctrlsf_search_mode='sync'
-"let g:ctrlsf_parse_speed=100
+let g:ctrlsf_search_mode='async'
+let g:ctrlsf_parse_speed=200
 
 "Plugin 'dkprice/vim-easygrep'
 "let g:EasyGrepCommand=0
@@ -104,6 +104,8 @@ let g:ctrlsf_search_mode='sync'
 "\ 'c' : ['->', '.'],
 "\ 'lua' : ['.', ':'],
 "\}
+
+"Plugin 'vim-scripts/AutoComplPop'
 
 Plugin 'ervandew/supertab'
 let g:SuperTabDefaultCompletionType='context'
@@ -192,9 +194,9 @@ map <silent> <C-Down> :resize+5<CR>
 map <silent> <C-Left> :vertical resize-5<CR>
 map <silent> <C-Right> :vertical resize+5<CR>
 
-map <silent> <M-t> :tabnew<CR>
-map <silent> <M-n> :NERDTreeToggle<CR>
-map <silent> <M-l> :TlistToggle<CR>
+map <silent> <C-t> :tabnew<CR>
+map <silent> <C-n> :NERDTreeToggle<CR>
+map <silent> <C-b> :TlistToggle<CR>
 
 nmap <C-f> <Plug>CtrlSFCwordPath
 vmap <C-f> <Plug>CtrlSFVwordPath
