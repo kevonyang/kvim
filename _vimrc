@@ -69,6 +69,7 @@ let g:ctrlsf_ignore_dir=['tags']
 let g:ctrlsf_default_root='cwd'
 let g:ctrlsf_search_mode='async'
 let g:ctrlsf_parse_speed=200
+let g:ctrlsf_context='-C 0'
 
 "Plugin 'dkprice/vim-easygrep'
 "let g:EasyGrepCommand=0
@@ -111,6 +112,8 @@ Plugin 'ervandew/supertab'
 let g:SuperTabDefaultCompletionType='context'
 
 Plugin 'vim-scripts/a.vim'
+
+Plugin 'easymotion/vim-easymotion'
 
 " All of your Plugins must be added before the following line
 call vundle#end()            " required
@@ -186,13 +189,13 @@ set winaltkeys=no
 
 map <silent> <C-j> :resize+5<CR>
 map <silent> <C-k> :resize-5<CR> 
-map <silent> <C-h> :vertical resize-5<CR>
-map <silent> <C-l> :vertical resize+5<CR>
+map <silent> <C-h> :vertical resize-10<CR>
+map <silent> <C-l> :vertical resize+10<CR>
 
 map <silent> <C-Up> :resize-5<CR>
 map <silent> <C-Down> :resize+5<CR> 
-map <silent> <C-Left> :vertical resize-5<CR>
-map <silent> <C-Right> :vertical resize+5<CR>
+map <silent> <C-Left> :vertical resize-10<CR>
+map <silent> <C-Right> :vertical resize+10<CR>
 
 map <silent> <C-t> :tabnew<CR>
 map <silent> <C-n> :NERDTreeToggle<CR>
@@ -208,6 +211,8 @@ vmap <C-f> <Plug>CtrlSFVwordPath
 "nnoremap <C-f>o :CtrlSFOpen<CR>
 "nnoremap <C-f>t :CtrlSFToggle<CR>
 "inoremap <C-f>t <Esc>:CtrlSFToggle<CR>
+
+map f <Plug>(easymotion-prefix)
 
 "run server
 function RunServer()
