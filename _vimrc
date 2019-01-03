@@ -203,6 +203,7 @@ map <silent> <C-b> :TlistToggle<CR>
 
 nmap <C-f> <Plug>CtrlSFCwordPath
 vmap <C-f> <Plug>CtrlSFVwordPath
+nmap <S-f> <Plug>CtrlSFPrompt
 "nmap     <C-f>f <Plug>CtrlSFPrompt
 "vmap     <C-f>f <Plug>CtrlSFVwordPath
 "vmap     <C-f>F <Plug>CtrlSFVwordExec
