@@ -114,6 +114,8 @@ let g:SuperTabDefaultCompletionType='context'
 Plugin 'vim-scripts/a.vim'
 
 Plugin 'easymotion/vim-easymotion'
+Plugin 'terryma/vim-multiple-cursors'
+let g:multi_cursor_use_default_mapping=0
 
 " All of your Plugins must be added before the following line
 call vundle#end()            " required
@@ -176,7 +178,7 @@ set secure
 set cursorline
 "set cursorcolumn 
 
-set tags=tags;
+set tags=./tags;,tags;
 "set autochdir
 
 set guioptions-=m  "menu bar
@@ -214,6 +216,20 @@ nmap <S-f> <Plug>CtrlSFPrompt
 "inoremap <C-f>t <Esc>:CtrlSFToggle<CR>
 
 map f <Plug>(easymotion-prefix)
+
+let g:multi_cursor_start_word_key      = '<A-n>'
+let g:multi_cursor_select_all_word_key = '<A-a>'
+let g:multi_cursor_start_key           = 'g<A-n>'
+let g:multi_cursor_select_all_key      = 'g<A-a>'
+let g:multi_cursor_next_key            = '<A-n>'
+let g:multi_cursor_prev_key            = '<A-p>'
+let g:multi_cursor_skip_key            = '<A-x>'
+let g:multi_cursor_quit_key            = '<Esc>'
+
+function GenerateCtags()
+	silent exec "!ctags -R " . getcwd()
+endfunction
+nmap <M-t> :call GenerateCtags()<CR>
 
 "run server
 function RunServer()
@@ -269,4 +285,4 @@ function SwitchInc()
 		execute "edit " . substitute(expand("%"), '\.lua', 'Inc\.lua', "")
 	endif
 endfunction
-nmap <M-a> :call SwitchInc()<CR>
+nmap <M-i> :call SwitchInc()<CR>
