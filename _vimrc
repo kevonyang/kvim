@@ -1,5 +1,17 @@
+set encoding=utf-8
+"set fileencodings=ucs-bom,utf-8,utf-16,gb2312,gbk,big5,gb18030,latin1
+"set fileencodings=ucs-bom,utf-8,gb2312,gbk,big5,gb18030,cp936
+set fileencodings=ucs-bom,utf-8,chinese
+"set nobomb
+set langmenu=zh_CN.UTF-8
+let $LANG='zh_CN.UTF-8'
+"language message zh_CN.UTF-8
+
 source $VIMRUNTIME/vimrc_example.vim
 source $VIMRUNTIME/mswin.vim
+source $VIMRUNTIME/delmenu.vim
+source $VIMRUNTIME/menu.vim
+
 behave mswin
 
 set diffexpr=MyDiff()
@@ -32,6 +44,7 @@ function MyDiff()
   endif
 endfunction
 
+
 "vundle-----------------------------------------------------------------------
 set nocompatible              " be iMproved, required
 filetype off                  " required
@@ -59,8 +72,10 @@ let g:ctrlp_custom_ignore={
     \ 'file': '\v\.(exe|so|dll|xls|xlsx|doc|docx|meta|bytes|ppt|pptx|xml|pdb|pem|config|jsx|include|bat|ini|txt|ddef|release|gradle|java|m|cmd)$',
     \ }
 
+Plugin 'mileszs/ack.vim'
+
 Plugin 'dyng/ctrlsf.vim'
-let g:ctrlsf_ackprg='ag'
+let g:ctrlsf_ackprg='rg'
 let g:ctrlsf_absolute_file_path=0
 let g:ctrlsf_auto_close=0
 let g:ctrlsf_case_sensitive='no'
@@ -71,51 +86,24 @@ let g:ctrlsf_search_mode='async'
 let g:ctrlsf_parse_speed=200
 let g:ctrlsf_context='-C 0'
 
-"Plugin 'dkprice/vim-easygrep'
-"let g:EasyGrepCommand=0
-"let g:EasyGrepRoot="cwd"
-"let g:EasyGrepIgnoreCase=1
-"let g:EasyGrepRecursive=1
-"let g:EasyGrepSearchCurrentBufferDir=0
-"let g:EasyGrepFilesToExclude="tags"
-
-"if executable('ag')
-"  set grepprg=ag\ --nogroup\ --nocolor
-"endif
-
-"Plugin 'Shougo/neocomplete.vim'
-"let g:acp_enableAtStartup=0
-"let g:neocomplete#enable_at_startup=1
-"let g:neocomplete#enable_smart_case=1
-"let g:neocomplete#sources#syntax#min_keyword_length=3
-"let g:neocomplete#sources#dictionary#dictionaries={
-"    \ 'default' : '',
-"    \ 'vimshell' : $HOME.'/.vimshell_hist',
-"    \ 'scheme' : $HOME.'/.gosh_completions'
-"\ }
-" Define keyword.
-"if !exists('g:neocomplete#keyword_patterns')
-"    let g:neocomplete#keyword_patterns={}
-"endif
-"let g:neocomplete#keyword_patterns['default']='\h\w*'
-
-"Plugin 'Valloric/YouCompleteMe'
-"let g:ycm_min_num_of_chars_for_completion=2
-"let g:ycm_semantic_triggers={
-"\ 'c' : ['->', '.'],
-"\ 'lua' : ['.', ':'],
-"\}
-
-"Plugin 'vim-scripts/AutoComplPop'
-
 Plugin 'ervandew/supertab'
 let g:SuperTabDefaultCompletionType='context'
 
 Plugin 'vim-scripts/a.vim'
 
 Plugin 'easymotion/vim-easymotion'
+map f <Plug>(easymotion-prefix)
+
 Plugin 'terryma/vim-multiple-cursors'
 let g:multi_cursor_use_default_mapping=0
+let g:multi_cursor_start_word_key      = '<A-n>'
+let g:multi_cursor_select_all_word_key = '<A-m>'
+let g:multi_cursor_start_key           = 'g<A-n>'
+let g:multi_cursor_select_all_key      = 'g<A-m>'
+let g:multi_cursor_next_key            = '<A-n>'
+let g:multi_cursor_prev_key            = '<A-p>'
+let g:multi_cursor_skip_key            = '<A-x>'
+let g:multi_cursor_quit_key            = '<Esc>'
 
 " All of your Plugins must be added before the following line
 call vundle#end()            " required
@@ -123,33 +111,21 @@ filetype plugin indent on    " required
 
 "endvundle-----------------------------------------------------------------------
 
-set backspace=2		" more powerful backspacing
 
-set encoding=utf-8
-"set fileencodings=ucs-bom,utf-8,utf-16,gb2312,gbk,big5,gb18030,latin1
-"set fileencodings=ucs-bom,utf-8,gb2312,gbk,big5,gb18030,cp936
-set fileencodings=ucs-bom,utf-8,chinese
-"set nobomb
-
-set langmenu=zh_CN.UTF-8
-let $LANG='zh_CN.UTF-8'
-"language message zh_CN.UTF-8
-
-source $VIMRUNTIME/delmenu.vim
-source $VIMRUNTIME/menu.vim
-
+"colorscheme solarized
 colorscheme desert
 syntax enable
 syntax on
 
 set lines=50 columns=200 linespace=1
 set background=dark
-set guifont=consolas:h11:cANSI
+set guifont=consolas:h10.5:cANSI
 "set guifontwide=NSimSun:h10:cANSI
 
 set foldenable
 set foldmethod=manual
 
+set backspace=2		" more powerful backspacing
 set tabstop=4
 set shiftwidth=4
 set softtabstop=4
@@ -178,16 +154,26 @@ set secure
 set cursorline
 "set cursorcolumn 
 
+"set splitbelow
+"set splitright
+
 set tags=./tags;,tags;
 "set autochdir
+set clipboard+=unnamed
 
 set guioptions-=m  "menu bar
 set guioptions-=T  "toolbar
 set guioptions-=r  "scrollbar
 set guioptions-=L
+set guioptions-=b
 set guioptions-=e  "tab
 
 set winaltkeys=no
+
+inoremap <M-j> <Down>
+inoremap <M-k> <Up>
+inoremap <M-h> <left>
+inoremap <M-l> <Right>
 
 map <silent> <C-j> :resize+5<CR>
 map <silent> <C-k> :resize-5<CR> 
@@ -203,9 +189,10 @@ map <silent> <C-t> :tabnew<CR>
 map <silent> <C-n> :NERDTreeToggle<CR>
 map <silent> <C-b> :TlistToggle<CR>
 
-nmap <C-f> <Plug>CtrlSFCwordPath
-vmap <C-f> <Plug>CtrlSFVwordPath
-nmap <S-f> <Plug>CtrlSFPrompt
+nmap <C-f> <Plug>CtrlSFPrompt
+nmap <S-f> <Plug>CtrlSFCwordPath
+vmap <S-f> <Plug>CtrlSFVwordPath
+nmap <M-f> :CtrlSFToggle<CR>
 "nmap     <C-f>f <Plug>CtrlSFPrompt
 "vmap     <C-f>f <Plug>CtrlSFVwordPath
 "vmap     <C-f>F <Plug>CtrlSFVwordExec
@@ -215,27 +202,23 @@ nmap <S-f> <Plug>CtrlSFPrompt
 "nnoremap <C-f>t :CtrlSFToggle<CR>
 "inoremap <C-f>t <Esc>:CtrlSFToggle<CR>
 
-map f <Plug>(easymotion-prefix)
-
-let g:multi_cursor_start_word_key      = '<A-n>'
-let g:multi_cursor_select_all_word_key = '<A-a>'
-let g:multi_cursor_start_key           = 'g<A-n>'
-let g:multi_cursor_select_all_key      = 'g<A-a>'
-let g:multi_cursor_next_key            = '<A-n>'
-let g:multi_cursor_prev_key            = '<A-p>'
-let g:multi_cursor_skip_key            = '<A-x>'
-let g:multi_cursor_quit_key            = '<Esc>'
 
 function GenerateCtags()
-	silent exec "!ctags -R " . getcwd()
+	silent! exec '!ctags -R ' . getcwd()
 endfunction
 nmap <M-t> :call GenerateCtags()<CR>
 
 "run server
 function RunServer()
-	silent exec "!runserver"
+	silent! exec "!runserver"
 endfunction
 nmap <F5> :call RunServer()<CR>
+
+"close server
+function CloseServer()
+	silent! exec "!closeserver"
+endfunction
+nmap <F6> :call CloseServer()<CR>
 
 "server reload, only master and gas
 function ReloadServer()
@@ -273,9 +256,15 @@ nmap <M-c> :call CheckServer()<CR>
 
 "open folder of current file
 function Folder()
-	silent exec "!explorer " . expand("%:h")
+	silent! exec "!start " . expand("%:h")
 endfunction
 nmap <silent> <M-e> :call Folder()<CR>
+
+"open folder of current file with totalcommand
+function TCFolder()
+	silent! exec "!vimtc " . expand("%:p:h")
+endfunction
+nmap <silent> <M-d> :call TCFolder()<CR>
 
 "swtich between inc and mgr
 function SwitchInc()
