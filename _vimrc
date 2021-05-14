@@ -58,38 +58,90 @@ Plugin 'VundleVim/Vundle.vim'
 
 Plugin 'scrooloose/nerdtree'
 let g:NERDTreeChDirMode=2
+map <silent> <C-n> :NERDTreeToggle<CR>
 
-Plugin 'vim-scripts/taglist.vim'
-let Tlist_Show_One_File=1
-let Tlist_Use_Right_Window=1
-let Tlist_GainFocus_On_ToggleOpen=1
-let Tlist_Close_On_Select=1
+"Plugin 'vim-scripts/taglist.vim'
+"let Tlist_Show_One_File=1
+"let Tlist_Use_Right_Window=1
+"let Tlist_GainFocus_On_ToggleOpen=1
+"let Tlist_Close_On_Select=1
+"map <silent> <C-b> :TlistToggle<CR>
 
-Plugin 'ctrlpvim/ctrlp.vim'
-let g:ctrlp_working_path_mode = 'wa'
-let g:ctrlp_custom_ignore={
-    \ 'dir':  '\v[\/]\.(git|hg|svn)$',
-    \ 'file': '\v\.(exe|so|dll|xls|xlsx|doc|docx|meta|bytes|ppt|pptx|xml|pdb|pem|config|jsx|include|bat|ini|txt|ddef|release|gradle|java|m|cmd)$',
-    \ }
+Plugin 'Yggdroot/LeaderF'
+let g:Lf_HideHelp = 1
+let g:Lf_UseCache = 0
+let g:Lf_UseVersionControlTool = 0
+let g:Lf_IgnoreCurrentBufferName = 1
+let g:Lf_WindowPosition = 'popup'
+let g:Lf_PreviewInPopup = 1
+let g:Lf_StlSeparator = { 'left': '', 'right': '' }
+let g:Lf_PreviewResult = {'Function': 0, 'BufTag': 0 }
+let g:Lf_WildIgnore = {
+	\ 'dir': ['.svn','.git','.hg'],
+    \ 'file': ['*.bak','*.exe','*.o','*.so','*.dll','*.sdf','*.opensdf','*.suo','*.xls','*.xlsx','*.doc','*.docx','*.ppt','*.pptx','*.meta','*.bytes','*.pdb']
+	\}
+let g:Lf_WorkingDirectoryMode = 'c'
+let g:Lf_RootMarkers = []
+let g:Lf_ShortcutF = '<C-P>'
+noremap <leader>fb :<C-U><C-R>=printf("Leaderf buffer %s", "")<CR><CR>
+noremap <leader>fm :<C-U><C-R>=printf("Leaderf mru %s", "")<CR><CR>
+noremap <leader>ft :<C-U><C-R>=printf("Leaderf bufTag %s", "")<CR><CR>
+noremap <leader>fl :<C-U><C-R>=printf("Leaderf line %s", "")<CR><CR>
 
-Plugin 'mileszs/ack.vim'
+noremap <leader>ff :<C-U><C-R>=printf("Leaderf! rg -e ")<CR>
+noremap <C-F> :<C-U><C-R>=printf("Leaderf! rg -F ")<CR>
+nnoremap <S-F> :<C-U><C-R>=printf("Leaderf! rg -F %s", expand("<cword>"))<CR>
+vnoremap <S-F> :<C-U><C-R>=printf("Leaderf! rg -F %s", leaderf#Rg#visual())<CR>
+noremap <C-B> :<C-U><C-R>=printf("Leaderf! rg --current-buffer -F %s", expand("<cword>"))<CR>
+noremap <C-G> :<C-U>Leaderf! rg --recall<CR>
 
-Plugin 'dyng/ctrlsf.vim'
-let g:ctrlsf_ackprg='rg'
-let g:ctrlsf_absolute_file_path=0
-let g:ctrlsf_auto_close=0
-let g:ctrlsf_case_sensitive='no'
-let g:ctrlsf_default_view_mode='compact'
-let g:ctrlsf_ignore_dir=['tags']
-let g:ctrlsf_default_root='cwd'
-let g:ctrlsf_search_mode='async'
-let g:ctrlsf_parse_speed=200
-let g:ctrlsf_context='-C 0'
+let g:Lf_GtagsAutoGenerate = 0
+let g:Lf_Gtagslabel = 'native-pygments'
+noremap <leader>fr :<C-U><C-R>=printf("Leaderf! gtags -r %s", expand("<cword>"))<CR><CR>
+noremap <leader>fd :<C-U><C-R>=printf("Leaderf! gtags -d %s --auto-jump", expand("<cword>"))<CR><CR>
+noremap <leader>fo :<C-U><C-R>=printf("Leaderf! gtags --recall %s", "")<CR><CR>
+noremap <leader>fn :<C-U><C-R>=printf("Leaderf gtags --next %s", "")<CR><CR>
+noremap <leader>fp :<C-U><C-R>=printf("Leaderf gtags --previous %s", "")<CR><CR>
+noremap <leader>fu :<C-U><C-R>=printf("Leaderf gtags --update")<CR><CR>
+
+"Plugin 'ctrlpvim/ctrlp.vim'
+"let g:ctrlp_working_path_mode = 'wa'
+"let g:ctrlp_custom_ignore={
+"    \ 'dir':  '\v[\/]\.(git|hg|svn)$',
+"    \ 'file': '\v\.(exe|so|dll|xls|xlsx|doc|docx|meta|bytes|ppt|pptx|xml|pdb|pem|config|jsx|include|bat|ini|txt|ddef|release|gradle|java|m|cmd)$',
+"    \ }
+
+"Plugin 'dyng/ctrlsf.vim'
+"let g:ctrlsf_ackprg='rg'
+"let g:ctrlsf_absolute_file_path=0
+"let g:ctrlsf_auto_close=0
+"let g:ctrlsf_case_sensitive='no'
+"let g:ctrlsf_default_view_mode='compact'
+"let g:ctrlsf_ignore_dir=['tags']
+"let g:ctrlsf_default_root='cwd'
+"let g:ctrlsf_search_mode='async'
+"let g:ctrlsf_parse_speed=200
+"let g:ctrlsf_context='-C 3'
+
+"nmap <C-f> <Plug>CtrlSFPrompt
+"nmap <S-f> <Plug>CtrlSFCwordPath
+"vmap <S-f> <Plug>CtrlSFVwordPath
+"nmap <M-f> :CtrlSFToggle<CR>
+
+"nmap     <C-f>f <Plug>CtrlSFPrompt
+"vmap     <C-f>f <Plug>CtrlSFVwordPath
+"vmap     <C-f>F <Plug>CtrlSFVwordExec
+"nmap     <C-f>n <Plug>CtrlSFCwordPath
+"nmap     <C-f>p <Plug>CtrlSFPwordPath
+"nnoremap <C-f>o :CtrlSFOpen<CR>
+"nnoremap <C-f>t :CtrlSFToggle<CR>
+"inoremap <C-f>t <Esc>:CtrlSFToggle<CR>
+
+"Plugin 'mileszs/ack.vim'
+"Plugin 'vim-scripts/a.vim'
 
 Plugin 'ervandew/supertab'
 let g:SuperTabDefaultCompletionType='context'
-
-Plugin 'vim-scripts/a.vim'
 
 Plugin 'easymotion/vim-easymotion'
 map f <Plug>(easymotion-prefix)
@@ -97,13 +149,14 @@ map f <Plug>(easymotion-prefix)
 Plugin 'terryma/vim-multiple-cursors'
 let g:multi_cursor_use_default_mapping=0
 let g:multi_cursor_start_word_key      = '<A-n>'
-let g:multi_cursor_select_all_word_key = '<A-m>'
+let g:multi_cursor_select_all_word_key = '<A-a>'
 let g:multi_cursor_start_key           = 'g<A-n>'
-let g:multi_cursor_select_all_key      = 'g<A-m>'
+let g:multi_cursor_select_all_key      = 'g<A-a>'
 let g:multi_cursor_next_key            = '<A-n>'
 let g:multi_cursor_prev_key            = '<A-p>'
 let g:multi_cursor_skip_key            = '<A-x>'
 let g:multi_cursor_quit_key            = '<Esc>'
+set selection=inclusive
 
 " All of your Plugins must be added before the following line
 call vundle#end()            " required
@@ -170,6 +223,9 @@ set guioptions-=e  "tab
 
 set winaltkeys=no
 
+"use continuous paste(xnoremap p "0p)
+xnoremap p pgvy
+
 inoremap <M-j> <Down>
 inoremap <M-k> <Up>
 inoremap <M-h> <left>
@@ -186,37 +242,21 @@ map <silent> <C-Left> :vertical resize-10<CR>
 map <silent> <C-Right> :vertical resize+10<CR>
 
 map <silent> <C-t> :tabnew<CR>
-map <silent> <C-n> :NERDTreeToggle<CR>
-map <silent> <C-b> :TlistToggle<CR>
 
-nmap <C-f> <Plug>CtrlSFPrompt
-nmap <S-f> <Plug>CtrlSFCwordPath
-vmap <S-f> <Plug>CtrlSFVwordPath
-nmap <M-f> :CtrlSFToggle<CR>
-"nmap     <C-f>f <Plug>CtrlSFPrompt
-"vmap     <C-f>f <Plug>CtrlSFVwordPath
-"vmap     <C-f>F <Plug>CtrlSFVwordExec
-"nmap     <C-f>n <Plug>CtrlSFCwordPath
-"nmap     <C-f>p <Plug>CtrlSFPwordPath
-"nnoremap <C-f>o :CtrlSFOpen<CR>
-"nnoremap <C-f>t :CtrlSFToggle<CR>
-"inoremap <C-f>t <Esc>:CtrlSFToggle<CR>
-
-
-function GenerateCtags()
-	silent! exec '!ctags -R ' . getcwd()
-endfunction
-nmap <M-t> :call GenerateCtags()<CR>
+"function GenerateCtags()
+"	silent! exec '!ctags -R ' . getcwd()
+"endfunction
+"nmap <M-t> :call GenerateCtags()<CR>
 
 "run server
 function RunServer()
-	silent! exec "!runserver"
+	silent! exec "!start runserver"
 endfunction
 nmap <F5> :call RunServer()<CR>
 
 "close server
 function CloseServer()
-	silent! exec "!closeserver"
+	silent! exec "!start closeserver"
 endfunction
 nmap <F6> :call CloseServer()<CR>
 
@@ -244,12 +284,12 @@ function CheckServer()
 		exec "!check gas " . expand("%:t")
 	endif
 	if match(expand("%:p"),"master") != -1
-		exec "!runtime_check master " . expand("%:p")
+		exec "!runtime_check master " . expand("%:t")
 	elseif match(expand("%:p"),"gas") != -1
-		exec "!runtime_check gas " . expand("%:p")
+		exec "!runtime_check gas " . expand("%:t")
 	elseif match(expand("%:p"),"common") != -1
-		exec "!runtime_check master " . expand("%:p")
-		exec "!runtime_check gas " . expand("%:p")
+		exec "!runtime_check master " . expand("%:t")
+		exec "!runtime_check gas " . expand("%:t")
 	endif
 endfunction
 nmap <M-c> :call CheckServer()<CR>
