@@ -9,6 +9,10 @@ https://github.com/vim/vim-win32-installer/releases
 
 exe安装
 
+## lua53 加入环境变量
+
+lua53解压后没几个文件，直接拷进Vim目录即可
+
 ## 安装python
 
 https://www.python.org/downloads/
@@ -65,6 +69,3 @@ https://github.com/JFLarvoire/the_silver_searcher/releases
 
 ag.exe拷贝到Vim目录下
 
-## lua 加入环境变量
-
-直接拷进Vim目录也可
