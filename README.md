@@ -39,7 +39,7 @@ https://github.com/BurntSushi/ripgrep/releases
 
 rg.exe拷贝到Vim目录下
 
-## ag 搜索插件 rg替代
+## ag 搜索插件 中文支持不太好，已用rg替代
 
 https://github.com/JFLarvoire/the_silver_searcher/releases
 
