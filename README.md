@@ -51,6 +51,8 @@ ctags-2021-10-25_p5.9.20211024.0-2-g6f544dfc-x64.zip
 
 https://github.com/universal-ctags/ctags-win32/releases
 
+ctags.exe拷贝到vim目录下
+
 ## 安装gtags 查定义查引用
 
 glo665wb.zip
@@ -59,7 +61,8 @@ https://www.gnu.org/software/global/ => http://adoxa.altervista.org/global/
 
 解压到C目录，加入环境变量，也可拷贝到Vim目录下
 
-ctags.exe拷贝到vim目录下
+gtags\share\gtags\gtags.conf
+common增加 home/,implib/,tools/,test/,bin/, 排除目录后，可在server目录建立tags
 
 ## 安装vundle 插件管理器
 
