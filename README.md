@@ -23,19 +23,13 @@ C:\Python27\
 
 C:\Python27\Scripts
 
-要根据vim版本里的描述安装匹配的版本，配合8.1使用python2.7可用
+要根据vim版本里的README描述安装匹配的版本
 
 ## 安装pygments 用于语法分析
 
 命令行执行 pip install pygments
 
-## 安装vundle 插件管理器
-
-https://github.com/VundleVim/Vundle.vim
-
-git clone https://github.com/VundleVim/Vundle.vim.git ~/.vim/bundle/Vundle.vim
-
-替换_vimrc后，打开vim，输入 :PluginInstall 安装插件
+实验证明gtags解析lua依然依赖ctags
 
 ## 安装rg 搜索插件
 
@@ -66,4 +60,12 @@ https://www.gnu.org/software/global/ => http://adoxa.altervista.org/global/
 解压到C目录，加入环境变量，也可拷贝到Vim目录下
 
 ctags.exe拷贝到vim目录下
+
+## 安装vundle 插件管理器
+
+https://github.com/VundleVim/Vundle.vim
+
+git clone https://github.com/VundleVim/Vundle.vim.git ~/.vim/bundle/Vundle.vim
+
+替换_vimrc后，打开vim，输入 :PluginInstall 安装插件
 
