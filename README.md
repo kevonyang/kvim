@@ -70,5 +70,7 @@ https://github.com/VundleVim/Vundle.vim
 
 git clone https://github.com/VundleVim/Vundle.vim.git ~/.vim/bundle/Vundle.vim
 
+~为用户目录，windows上需要替换成完整用户目录
+
 替换_vimrc后，打开vim，输入 :PluginInstall 安装插件
 
