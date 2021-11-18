@@ -11,6 +11,8 @@ exe安装
 
 ## lua53 加入环境变量
 
+http://luabinaries.sourceforge.net/download.html
+
 lua53解压后没几个文件，直接拷进Vim目录即可
 
 ## 安装python 最新vim8.2对应python3.9
