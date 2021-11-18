@@ -7,6 +7,10 @@ gvim_8.1.2300_x64.exe 长期使用稳定版本，最新版本也可
 
 https://github.com/vim/vim-win32-installer/releases
 
+参考readme，以确定需要的python和lua版本
+
+https://github.com/vim/vim-win32-installer/blob/master/README.md
+
 exe安装
 
 ## lua53 加入环境变量
