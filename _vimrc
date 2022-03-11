@@ -188,8 +188,8 @@ set background=dark
 set guifont=consolas:h10.5:cANSI
 "set guifontwide=NSimSun:h10:cANSI
 
-set foldenable
-set foldmethod=manual
+set foldmethod=indent
+set nofoldenable
 
 set backspace=2		" more powerful backspacing
 set tabstop=4
@@ -208,8 +208,12 @@ set incsearch
 set showmatch
 set wildmenu
 
+"set nowrapscan
+set noendofline
+
 set ruler
 
+set statusline=%F%m%r%h%w%=\ [FORMAT=%{&ff}:%{(&fenc!=\"\"?&fenc:&enc).((exists(\"+bomb\")\ &&\ &bomb)?\"+\":\"\")}]\ [ASCII=%03.3b]\ [POS=%l,%v\ \ %p%%]
 set laststatus=2
 
 set number
@@ -235,6 +239,14 @@ set guioptions-=b
 set guioptions-=e  "tab
 
 set winaltkeys=no
+
+"未开启 IME 时光标背景色
+highlight Cursor guifg=slategrey guibg=khaki gui=NONE
+"开启IME 时光标背景色
+highlight CursorIM guifg=NONE guibg=SkyBlue gui=NONE
+"关闭Vim的自动切换 IME 输入法(插入模式和检索模式)
+set iminsert=0
+set imsearch=-1
 
 "use continuous paste(xnoremap p "0p)
 xnoremap p pgvy
@@ -319,7 +331,7 @@ function TCFolder()
 endfunction
 nmap <silent> <M-d> :call TCFolder()<CR>
 
-"swtich between inc and mgr
+"switch between inc and mgr
 function SwitchInc()
 	if match(expand("%"),"Inc\.lua") != -1
 		execute "edit " . substitute(expand("%"), 'Inc\.lua', '\.lua', "")
