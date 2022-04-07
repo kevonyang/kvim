@@ -17,7 +17,7 @@ exe安装
 
 http://luabinaries.sourceforge.net/download.html
 
-lua53解压后没几个文件，直接拷进Vim目录即可
+lua53解压后没几个文件，直接拷进Vim目录即可（安装目录，gvim.exe所在目录）
 
 ## 安装python 最新vim8.2对应python3.9
 
@@ -43,13 +43,13 @@ ripgrep-12.1.1-x86_64-pc-windows-msvc
 
 https://github.com/BurntSushi/ripgrep/releases
 
-rg.exe拷贝到Vim目录下
+rg.exe拷贝到Vim目录下（安装目录，gvim.exe所在目录）
 
 ## ag 搜索插件 中文支持不太好，已用rg替代
 
 https://github.com/JFLarvoire/the_silver_searcher/releases
 
-ag.exe拷贝到Vim目录下
+ag.exe拷贝到Vim目录下（安装目录，gvim.exe所在目录）
 
 ## ctags gtags解析lua有依赖
 
@@ -57,7 +57,7 @@ ctags-2021-10-25_p5.9.20211024.0-2-g6f544dfc-x64.zip
 
 https://github.com/universal-ctags/ctags-win32/releases
 
-ctags.exe拷贝到vim目录下
+ctags.exe拷贝到vim目录下（安装目录，gvim.exe所在目录）
 
 ## 安装gtags 查定义查引用
 
