@@ -59,6 +59,14 @@ https://github.com/universal-ctags/ctags-win32/releases
 
 ctags.exe拷贝到vim目录下（安装目录，gvim.exe所在目录）
 
+##cscope 有C++需求才需要，能定位到类和结构体成员变量
+
+https://code.google.com/archive/p/cscope-win32/downloads
+
+cscope-15.8a-win64rev1-static.zip
+
+cscope.exe拷贝到vim目录下（安装目录，gvim.exe所在目录）
+
 ## 安装gtags 查定义查引用
 
 glo665wb.zip
