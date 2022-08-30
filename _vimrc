@@ -7,7 +7,7 @@ set langmenu=zh_CN.UTF-8
 let $LANG='zh_CN.UTF-8'
 "language message zh_CN.UTF-8
 
-source $VIMRUNTIME/vimrc_example.vim
+"source $VIMRUNTIME/vimrc_example.vim
 source $VIMRUNTIME/mswin.vim
 source $VIMRUNTIME/delmenu.vim
 source $VIMRUNTIME/menu.vim
@@ -59,13 +59,42 @@ Plugin 'VundleVim/Vundle.vim'
 Plugin 'scrooloose/nerdtree'
 let g:NERDTreeChDirMode=2
 map <silent> <C-n> :NERDTreeToggle<CR>
+map <silent> <M-f> :NERDTreeFind<CR>
 
-"Plugin 'vim-scripts/taglist.vim'
-"let Tlist_Show_One_File=1
-"let Tlist_Use_Right_Window=1
-"let Tlist_GainFocus_On_ToggleOpen=1
-"let Tlist_Close_On_Select=1
-"map <silent> <C-b> :TlistToggle<CR>
+" cscope setting
+if has("cscope")
+   "set csprg=/usr/bin/cscope              "指定用来执行 cscope 的命令
+   set csto=1                             "先搜索tags标签文件，再搜索cscope数据库
+   set cst                                "使用|:cstag|(:cs find g)，而不是缺省的:tag
+   set nocsverb                           "不显示添加数据库是否成功
+   " add any database in current directory
+   if filereadable("cscope.out")
+	  cs add cscope.out                   "添加cscope数据库
+   endif
+   set csverb                             "显示添加成功与否
+endif
+nmap <leader>ss :cs find s <C-R>=expand("<cword>")<CR><CR>
+nmap <leader>sg :cs find g <C-R>=expand("<cword>")<CR><CR>
+nmap <leader>sc :cs find c <C-R>=expand("<cword>")<CR><CR>
+nmap <leader>st :cs find t <C-R>=expand("<cword>")<CR><CR>
+nmap <leader>se :cs find e <C-R>=expand("<cword>")<CR><CR>
+nmap <leader>sf :cs find f <C-R>=expand("<cfile>")<CR><CR>
+nmap <leader>si :cs find i ^<C-R>=expand("<cfile>")<CR>$<CR>
+nmap <leader>sd :cs find d <C-R>=expand("<cword>")<CR><CR>
+nmap <leader>sa :cs find a <C-R>=expand("<cword>")<CR><CR>
+
+function GenerateCtags()
+	silent! exec '!ctags -R ' . getcwd()
+	silent! exec '!cscope -Rbq'
+endfunction
+nmap <leader>su :call GenerateCtags()<CR>
+
+Plugin 'vim-scripts/taglist.vim'
+let Tlist_Show_One_File=1
+let Tlist_Use_Right_Window=1
+let Tlist_GainFocus_On_ToggleOpen=1
+let Tlist_Close_On_Select=1
+map <silent> <M-t> :TlistToggle<CR>
 
 Plugin 'Yggdroot/LeaderF'
 let g:Lf_HideHelp = 1
@@ -74,8 +103,9 @@ let g:Lf_UseVersionControlTool = 0
 let g:Lf_DefaultExternalTool = 'rg'
 let g:Lf_IgnoreCurrentBufferName = 1
 let g:Lf_WindowPosition = 'popup'
+let g:Lf_PopupPosition = [0,0]
 let g:Lf_PreviewInPopup = 1
-let g:Lf_WindowHeight = 0.50
+let g:Lf_WindowHeight = 0.30
 let g:Lf_StlSeparator = { 'left': '', 'right': '' , 'font': '' }
 let g:Lf_PreviewResult = {
 	\ 'File': 0,
@@ -91,7 +121,7 @@ let g:Lf_PreviewResult = {
 	\}
 let g:Lf_WildIgnore = {
 	\ 'dir': ['.svn','.git','.hg'],
-    \ 'file': ['*.bak','*.exe','*.o','*.so','*.dll','*.sdf','*.opensdf','*.suo','*.xls','*.xlsx','*.doc','*.docx','*.ppt','*.pptx','*.meta','*.bytes','*.pdb']
+    \ 'file': ['*.bak','*.exe','*.o','*.so','*.dll','*.sln','*.sdf','*.opensdf','*.suo','*.vcxproj','*.filters','*.xls','*.xlsx','*.doc','*.docx','*.ppt','*.pptx','*.meta','*.bytes','*.pdb','*.out','tags']
 	\}
 let g:Lf_WorkingDirectoryMode = 'c'
 let g:Lf_RootMarkers = []
@@ -268,11 +298,6 @@ map <silent> <C-Right> :vertical resize+10<CR>
 
 map <silent> <C-t> :tabnew<CR>
 
-"function GenerateCtags()
-"	silent! exec '!ctags -R ' . getcwd()
-"endfunction
-"nmap <M-t> :call GenerateCtags()<CR>
-
 "run server
 function RunServer()
 	silent! exec "!start runserver"
@@ -304,17 +329,23 @@ function CheckServer()
 		exec "!check master " . expand("%:t")
 	elseif match(expand("%:p"),"gas") != -1
 		exec "!check gas " . expand("%:t")
+	elseif match(expand("%:p"),"login") != -1
+		exec "!check login " . expand("%:t")
 	elseif match(expand("%:p"),"common") != -1
 		exec "!check master " . expand("%:t")
 		exec "!check gas " . expand("%:t")
+		exec "!check login " . expand("%:t")
 	endif
 	if match(expand("%:p"),"master") != -1
 		exec "!runtime_check master " . expand("%:t")
 	elseif match(expand("%:p"),"gas") != -1
 		exec "!runtime_check gas " . expand("%:t")
+	elseif match(expand("%:p"),"login") != -1
+		exec "!runtime_check login " . expand("%:t")
 	elseif match(expand("%:p"),"common") != -1
 		exec "!runtime_check master " . expand("%:t")
 		exec "!runtime_check gas " . expand("%:t")
+		exec "!runtime_check login " . expand("%:t")
 	endif
 endfunction
 nmap <M-c> :call CheckServer()<CR>
