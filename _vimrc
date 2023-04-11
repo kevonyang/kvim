@@ -364,7 +364,7 @@ nmap <silent> <M-e> :call Folder()<CR>
 
 "open folder of current file with totalcommand
 function TCFolder()
-	silent exec "!vimtc " . expand("%:p:h")
+	silent exec "!start Totalcmd64.exe /o " . expand("%:p:h")
 endfunction
 nmap <silent> <M-d> :call TCFolder()<CR>
 
