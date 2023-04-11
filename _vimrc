@@ -260,6 +260,7 @@ set cursorline
 set tags=./tags;,tags;
 "set autochdir
 set clipboard+=unnamed
+set paste
 
 set guioptions-=m  "menu bar
 set guioptions-=T  "toolbar
@@ -300,13 +301,18 @@ map <silent> <C-t> :tabnew<CR>
 
 "run server
 function RunServer()
-	silent! exec "!start runserver"
+	silent exec "!start runserver"
 endfunction
-nmap <F5> :call RunServer()<CR>
+nmap <F3> :call RunServer()<CR>
+
+function RunServer_3D()
+	silent exec "!start run3dserver"
+endfunction
+nmap <F4> :call RunServer_3D()<CR>
 
 "close server
 function CloseServer()
-	silent! exec "!start closeserver"
+	silent exec "!start closeserver"
 endfunction
 nmap <F6> :call CloseServer()<CR>
 
@@ -352,13 +358,13 @@ nmap <M-c> :call CheckServer()<CR>
 
 "open folder of current file
 function Folder()
-	silent! exec "!start " . expand("%:h")
+	silent exec "!start " . expand("%:h")
 endfunction
 nmap <silent> <M-e> :call Folder()<CR>
 
 "open folder of current file with totalcommand
 function TCFolder()
-	silent! exec "!vimtc " . expand("%:p:h")
+	silent exec "!vimtc " . expand("%:p:h")
 endfunction
 nmap <silent> <M-d> :call TCFolder()<CR>
 
@@ -371,3 +377,80 @@ function SwitchInc()
 	endif
 endfunction
 nmap <M-i> :call SwitchInc()<CR>
+
+"kevon's vim edit
+function KVimEdit(argName)
+	let argFile = ""
+	let argFolder = "."
+	if a:argName == "_vimrc"
+		let argFolder = "C:\\Users\\hzyangkai1"
+		let argFile = argFolder . "\\_vimrc"
+	elseif a:argName == "design"
+		let argFolder = "H:\\L10\\design\\"
+		let argFile = argFolder
+	elseif a:argName == "server"
+		let argFolder = "H:\\L10\\server\\"
+		let argFile = argFolder
+	elseif a:argName == "game"
+		let argFolder = "H:\\L10\\server\\game\\"
+		let argFile = argFolder
+	elseif a:argName == "lua"
+		let argFolder = "H:\\L10\\Development\\QnMobile\\Assets\\Scripts\\lua\\"
+		let argFile = argFolder
+	elseif a:argName == "patch"
+		let argFolder = "H:\\L10\\patch\\"
+		let argFile = argFolder
+	elseif a:argName == "pdef"
+		let argFolder = "H:\\L10\\server\\engine\\src\\ArkCodeGen\\Properties\\"
+		let argFile = argFolder
+	elseif a:argName == "ddef"
+		let argFolder = "H:\\L10\\Development\\BinaryDesignDataGen\\"
+		let argFile = argFolder
+	elseif a:argName == "logdef"
+		let argFolder = "H:\\L10\\server\\tools\\autoGen\\log\\"
+		let argFile = argFolder
+	elseif a:argName == "gmcmddef"
+		let argFolder = "H:\\L10\\server\\tools\\autoGen\\GmCodeGen\\"
+		let argFile = argFolder
+	elseif a:argName == "mywork"
+		let argFolder = "H:\\mywork"
+		let argFile = argFolder
+	endif
+
+	silent exec "cd " . argFolder
+	silent exec "edit " . argFile
+endfunction
+function KVimEditComplete(ArgLead, CmdLine, CursorPos)
+	return "_vimrc\ndesign\nserver\ngame\nlua\npatch\npdef\nddef\nlogdef\ngmcmddef\nmywork\n"
+endfunction
+:command -nargs=+ -complete=custom,KVimEditComplete KEdit :call KVimEdit(<f-args>)
+
+"kevon's vim run
+function KVimRun(argName)
+	let currentDir = getcwd()
+	if a:argName == "3dall"
+		silent exec "!start run3dserver"
+	elseif a:argName == "all"
+		silent exec "!start runserver"
+	elseif a:argName == "3dgas"
+		silent exec "!start run3dgas"
+	elseif a:argName == "gas"
+		silent exec "!start rungas"
+	elseif a:argName == "gui"
+		silent exec "cd H:\\L10\\design\\data"
+		silent exec "!start 策划工具GUI.bat"
+		silent exec "cd " . currentDir
+	elseif a:argName == "newgmt"
+		silent exec "cd H:\\L10\\GMTool\\NewGMT"
+		silent exec "!start NewGMT.exe"
+		silent exec "cd " . currentDir
+	elseif a:argName == "patchcenter"
+		silent exec "cd H:\\L10\\patch\\patchcenter"
+		silent exec "!start patchcenter"
+		silent exec "cd " . currentDir
+	endif
+endfunction
+function KVimRunComplete(ArgLead, CmdLine, CursorPos)
+	return "3dall\nall\n3dgas\ngas\ngui\nnewgmt\npatchcenter\n"
+endfunction
+:command -nargs=+ -complete=custom,KVimRunComplete KRun :call KVimRun(<f-args>)
