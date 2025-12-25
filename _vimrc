@@ -1,7 +1,7 @@
 set encoding=utf-8
+set fileencodings=ucs-bom,utf-8,chinese
 "set fileencodings=ucs-bom,utf-8,utf-16,gb2312,gbk,big5,gb18030,latin1
 "set fileencodings=ucs-bom,utf-8,gb2312,gbk,big5,gb18030,cp936
-set fileencodings=ucs-bom,utf-8,chinese
 "set nobomb
 set langmenu=zh_CN.UTF-8
 let $LANG='zh_CN.UTF-8'
@@ -44,23 +44,6 @@ function MyDiff()
   endif
 endfunction
 
-
-"vundle-----------------------------------------------------------------------
-set nocompatible              " be iMproved, required
-filetype off                  " required
-
-" set the runtime path to include Vundle and initialize
-set rtp+=$HOME/.vim/bundle/Vundle.vim/
-call vundle#begin('$HOME/.vim/bundle/')
-
-" let Vundle manage Vundle, required
-Plugin 'VundleVim/Vundle.vim'
-
-Plugin 'scrooloose/nerdtree'
-let g:NERDTreeChDirMode=2
-map <silent> <C-n> :NERDTreeToggle<CR>
-map <silent> <M-f> :NERDTreeFind<CR>
-
 " cscope setting
 if has("cscope")
    "set csprg=/usr/bin/cscope              "指定用来执行 cscope 的命令
@@ -83,27 +66,65 @@ nmap <leader>si :cs find i ^<C-R>=expand("<cfile>")<CR>$<CR>
 nmap <leader>sd :cs find d <C-R>=expand("<cword>")<CR><CR>
 nmap <leader>sa :cs find a <C-R>=expand("<cword>")<CR><CR>
 
+" ctags setting
 function GenerateCtags()
 	silent! exec '!ctags -R ' . getcwd()
 	silent! exec '!cscope -Rbq'
 endfunction
 nmap <leader>su :call GenerateCtags()<CR>
 
-Plugin 'vim-scripts/taglist.vim'
+
+set nocompatible              " be iMproved, required
+filetype off                  " required
+
+call plug#begin()
+
+Plug 'preservim/nerdtree'
+let g:NERDTreeChDirMode=2
+map <silent> <C-n> :NERDTreeToggle<CR>
+map <silent> <M-f> :NERDTreeFind<CR>
+
+Plug 'vim-scripts/taglist.vim'
 let Tlist_Show_One_File=1
 let Tlist_Use_Right_Window=1
 let Tlist_GainFocus_On_ToggleOpen=1
 let Tlist_Close_On_Select=1
 map <silent> <M-t> :TlistToggle<CR>
 
-Plugin 'Yggdroot/LeaderF'
+Plug 'ervandew/supertab'
+let g:SuperTabDefaultCompletionType='context'
+
+Plug 'github/copilot.vim'
+imap <silent><script><expr> <C-J> copilot#Accept("\<CR>")
+let g:copilot_no_tab_map = v:true
+
+Plug 'easymotion/vim-easymotion'
+map f <Plug>(easymotion-prefix)
+
+"与系统剪贴板冲突
+"Plug 'terryma/vim-multiple-cursors'
+"let g:multi_cursor_use_default_mapping=0
+"let g:multi_cursor_start_word_key      = '<A-n>'
+"let g:multi_cursor_select_all_word_key = '<A-a>'
+"let g:multi_cursor_start_key           = 'g<A-n>'
+"let g:multi_cursor_select_all_key      = 'g<A-a>'
+"let g:multi_cursor_next_key            = '<A-n>'
+"let g:multi_cursor_prev_key            = '<A-p>'
+"let g:multi_cursor_skip_key            = '<A-x>'
+"let g:multi_cursor_quit_key            = '<Esc>'
+"set selection=inclusive
+
+Plug 'Yggdroot/LeaderF', { 'do': ':LeaderfInstallCExtension' }
 let g:Lf_HideHelp = 1
 let g:Lf_UseCache = 0
 let g:Lf_UseVersionControlTool = 0
 let g:Lf_DefaultExternalTool = 'rg'
 let g:Lf_IgnoreCurrentBufferName = 1
 let g:Lf_WindowPosition = 'popup'
-let g:Lf_PopupPosition = [0,0]
+let g:Lf_PopupWidth = 0.75
+let g:Lf_PopupHeight = 0.4
+let g:Lf_PopupPosition = [0, 0]
+let g:Lf_PopupPreviewPosition = 'top'
 let g:Lf_PreviewInPopup = 1
 let g:Lf_WindowHeight = 0.30
 let g:Lf_StlSeparator = { 'left': '', 'right': '' , 'font': '' }
@@ -121,7 +142,7 @@ let g:Lf_PreviewResult = {
 	\}
 let g:Lf_WildIgnore = {
 	\ 'dir': ['.svn','.git','.hg'],
-    \ 'file': ['*.bak','*.exe','*.o','*.so','*.dll','*.sln','*.sdf','*.opensdf','*.suo','*.vcxproj','*.filters','*.xls','*.xlsx','*.doc','*.docx','*.ppt','*.pptx','*.meta','*.bytes','*.pdb','*.out','tags']
+    \ 'file': ['*.map','*.tlog','*.bak','*.exe','*.o','*.so','*.dll','*.sln','*.sdf','*.opensdf','*.suo','*.vcxproj','*.filters','*.xls','*.xlsx','*.doc','*.docx','*.ppt','*.pptx','*.meta','*.bytes','*.pdb','*.out']
 	\}
 let g:Lf_WorkingDirectoryMode = 'c'
 let g:Lf_RootMarkers = []
@@ -131,6 +152,15 @@ noremap <leader>fm :<C-U><C-R>=printf("Leaderf mru %s", "")<CR><CR>
 noremap <leader>ft :<C-U><C-R>=printf("Leaderf bufTag %s", "")<CR><CR>
 noremap <leader>fl :<C-U><C-R>=printf("Leaderf line %s", "")<CR><CR>
 
+let g:Lf_RgConfig = [
+	\ "--max-columns-preview",
+	\ "--hidden",
+	\ "--glob=!.svn",
+	\ "--glob=!*.map",
+	\ "--glob=!*.tlog",
+	\ "--glob=!*.meta",
+	\ "--glob=!*.bytes",
+	\]
 noremap <leader>ff :<C-U><C-R>=printf("Leaderf! rg -e ")<CR>
 noremap <C-F> :<C-U><C-R>=printf("Leaderf! rg -F ")<CR>
 nnoremap <S-F> :<C-U><C-R>=printf("Leaderf! rg -F %s", expand("<cword>"))<CR>
@@ -146,6 +176,8 @@ noremap <leader>fo :<C-U><C-R>=printf("Leaderf! gtags --recall %s", "")<CR><CR>
 noremap <leader>fn :<C-U><C-R>=printf("Leaderf gtags --next %s", "")<CR><CR>
 noremap <leader>fp :<C-U><C-R>=printf("Leaderf gtags --previous %s", "")<CR><CR>
 noremap <leader>fu :<C-U><C-R>=printf("Leaderf gtags --update")<CR><CR>
+
+call plug#end()
 
 "Plugin 'ctrlpvim/ctrlp.vim'
 "let g:ctrlp_working_path_mode = 'wa'
@@ -180,32 +212,7 @@ noremap <leader>fu :<C-U><C-R>=printf("Leaderf gtags --update")<CR><CR>
 "nnoremap <C-f>t :CtrlSFToggle<CR>
 "inoremap <C-f>t <Esc>:CtrlSFToggle<CR>
 
-"Plugin 'mileszs/ack.vim'
-"Plugin 'vim-scripts/a.vim'
-
-Plugin 'ervandew/supertab'
-let g:SuperTabDefaultCompletionType='context'
-
-Plugin 'easymotion/vim-easymotion'
-map f <Plug>(easymotion-prefix)
-
-Plugin 'terryma/vim-multiple-cursors'
-let g:multi_cursor_use_default_mapping=0
-let g:multi_cursor_start_word_key      = '<A-n>'
-let g:multi_cursor_select_all_word_key = '<A-a>'
-let g:multi_cursor_start_key           = 'g<A-n>'
-let g:multi_cursor_select_all_key      = 'g<A-a>'
-let g:multi_cursor_next_key            = '<A-n>'
-let g:multi_cursor_prev_key            = '<A-p>'
-let g:multi_cursor_skip_key            = '<A-x>'
-let g:multi_cursor_quit_key            = '<Esc>'
-set selection=inclusive
-
-" All of your Plugins must be added before the following line
-call vundle#end()            " required
 filetype plugin indent on    " required
-
-"endvundle-----------------------------------------------------------------------
 
 
 "colorscheme solarized
@@ -215,7 +222,7 @@ syntax on
 
 set lines=50 columns=200 linespace=1
 set background=dark
-set guifont=consolas:h10.5:cANSI
+set guifont=consolas:h12:cANSI
 "set guifontwide=NSimSun:h10:cANSI
 
 set foldmethod=indent
@@ -246,11 +253,10 @@ set ruler
 set statusline=%F%m%r%h%w%=\ [FORMAT=%{&ff}:%{(&fenc!=\"\"?&fenc:&enc).((exists(\"+bomb\")\ &&\ &bomb)?\"+\":\"\")}]\ [ASCII=%03.3b]\ [POS=%l,%v\ \ %p%%]
 set laststatus=2
 
-set number
-
 set exrc
 set secure
 
+set number
 set cursorline
 "set cursorcolumn 
 
@@ -337,10 +343,16 @@ function CheckServer()
 		exec "!check gas " . expand("%:t")
 	elseif match(expand("%:p"),"login") != -1
 		exec "!check login " . expand("%:t")
+	elseif match(expand("%:p"),"ship") != -1
+		exec "!check ship " . expand("%:t")
+	elseif match(expand("%:p"),"house_db") != -1
+		exec "!check house_db " . expand("%:t")
+	elseif match(expand("%:p"),"database") != -1
+		exec "!check database " . expand("%:t")
 	elseif match(expand("%:p"),"common") != -1
-		exec "!check master " . expand("%:t")
-		exec "!check gas " . expand("%:t")
-		exec "!check login " . expand("%:t")
+		exec "!check master " . expand("%:t") . " common"
+		exec "!check gas " . expand("%:t") . " common"
+		exec "!check login " . expand("%:t") . " common"
 	endif
 	if match(expand("%:p"),"master") != -1
 		exec "!runtime_check master " . expand("%:t")
@@ -348,10 +360,16 @@ function CheckServer()
 		exec "!runtime_check gas " . expand("%:t")
 	elseif match(expand("%:p"),"login") != -1
 		exec "!runtime_check login " . expand("%:t")
+	elseif match(expand("%:p"),"ship") != -1
+		exec "!runtime_check ship " . expand("%:t")
+	elseif match(expand("%:p"),"house_db") != -1
+		exec "!runtime_check house_db " . expand("%:t")
+	elseif match(expand("%:p"),"database") != -1
+		exec "!runtime_check database " . expand("%:t")
 	elseif match(expand("%:p"),"common") != -1
-		exec "!runtime_check master " . expand("%:t")
-		exec "!runtime_check gas " . expand("%:t")
-		exec "!runtime_check login " . expand("%:t")
+		exec "!runtime_check master " . expand("%:t") . " common"
+		exec "!runtime_check gas " . expand("%:t") . " common"
+		exec "!runtime_check login " . expand("%:t") . " common"
 	endif
 endfunction
 nmap <M-c> :call CheckServer()<CR>
@@ -385,6 +403,33 @@ function KVimEdit(argName)
 	if a:argName == "_vimrc"
 		let argFolder = "C:\\Users\\hzyangkai1"
 		let argFile = argFolder . "\\_vimrc"
+	elseif a:argName == "design"
+		let argFolder = "H:\\L10\\design\\"
+		let argFile = argFolder
+	elseif a:argName == "server"
+		let argFolder = "H:\\L10\\server\\"
+		let argFile = argFolder
+	elseif a:argName == "game"
+		let argFolder = "H:\\L10\\server\\game\\"
+		let argFile = argFolder
+	elseif a:argName == "lua"
+		let argFolder = "H:\\L10\\Development\\QnMobile\\Assets\\Scripts\\lua\\"
+		let argFile = argFolder
+	elseif a:argName == "patch"
+		let argFolder = "H:\\L10\\patch\\"
+		let argFile = argFolder
+	elseif a:argName == "pdef"
+		let argFolder = "H:\\L10\\server\\engine\\src\\ArkCodeGen\\Properties\\"
+		let argFile = argFolder
+	elseif a:argName == "ddef"
+		let argFolder = "H:\\L10\\Development\\BinaryDesignDataGen\\"
+		let argFile = argFolder
+	elseif a:argName == "logdef"
+		let argFolder = "H:\\L10\\server\\tools\\autoGen\\log\\"
+		let argFile = argFolder
+	elseif a:argName == "gmcmddef"
+		let argFolder = "H:\\L10\\server\\tools\\autoGen\\GmCodeGen\\"
+		let argFile = argFolder
 	elseif a:argName == "mywork"
 		let argFolder = "H:\\mywork"
 		let argFile = argFolder
@@ -394,15 +439,36 @@ function KVimEdit(argName)
 	silent exec "edit " . argFile
 endfunction
 function KVimEditComplete(ArgLead, CmdLine, CursorPos)
-	return "_vimrc\nmywork\n"
+	return "_vimrc\ndesign\nserver\ngame\nlua\npatch\npdef\nddef\nlogdef\ngmcmddef\nmywork\n"
 endfunction
 :command -nargs=+ -complete=custom,KVimEditComplete KEdit :call KVimEdit(<f-args>)
 
 "kevon's vim run
 function KVimRun(argName)
 	let currentDir = getcwd()
+	if a:argName == "3dall"
+		silent exec "!start run3dserver"
+	elseif a:argName == "all"
+		silent exec "!start runserver"
+	elseif a:argName == "3dgas"
+		silent exec "!start run3dgas"
+	elseif a:argName == "gas"
+		silent exec "!start rungas"
+	elseif a:argName == "gui"
+		silent exec "cd H:\\L10\\design\\data"
+		silent exec "!start 策划工具GUI.bat"
+		silent exec "cd " . currentDir
+	elseif a:argName == "newgmt"
+		silent exec "cd H:\\L10\\GMTool\\NewGMT"
+		silent exec "!start NewGMT.exe"
+		silent exec "cd " . currentDir
+	elseif a:argName == "patchcenter"
+		silent exec "cd H:\\L10\\patch\\patchcenter"
+		silent exec "!start patchcenter"
+		silent exec "cd " . currentDir
+	endif
 endfunction
 function KVimRunComplete(ArgLead, CmdLine, CursorPos)
-	return "all\n"
+	return "3dall\nall\n3dgas\ngas\ngui\nnewgmt\npatchcenter\n"
 endfunction
 :command -nargs=+ -complete=custom,KVimRunComplete KRun :call KVimRun(<f-args>)
