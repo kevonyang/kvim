@@ -419,7 +419,7 @@ vim.api.nvim_create_autocmd('LspAttach', {
 		bufmap("n", "K", vim.lsp.buf.hover, "Hover docs")
 		bufmap("n", "<leader>rn", vim.lsp.buf.rename, "Rename")
 		bufmap("n", "<leader>ca", vim.lsp.buf.code_action, "Code action")
-		bufmap("n", "<leader>f", function() vim.lsp.buf.format({ async = true }) end, "Format")
+		--bufmap("n", "<leader>f", function() vim.lsp.buf.format({ async = true }) end, "Format")
 	end,
 })
 
