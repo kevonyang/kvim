@@ -78,6 +78,27 @@ require("lazy").setup({
 			dependencies = { 'nvim-lua/plenary.nvim' },
 		},
 		{
+			'nvim-telescope/telescope-fzf-native.nvim',
+			build = 'cmake -S. -Bbuild -DCMAKE_BUILD_TYPE=Release && cmake --build build --config Release --target install'
+		},
+		--[[
+		{
+			'ludovicchabant/vim-gutentags',
+			lazy = false,
+		},
+		--]]
+		{
+			'ervandew/supertab',
+		},
+		{
+			'ggandor/leap.nvim',
+			keys = { 's', 'S' },
+			config = function()
+				require('leap').add_default_mappings()
+			end,
+		},
+		--[[
+		{
 			"mason-org/mason.nvim",
 			config = true,
 		},
@@ -98,6 +119,7 @@ require("lazy").setup({
 		{ 'hrsh7th/nvim-cmp' },
 		{ 'hrsh7th/cmp-vsnip' },
 		{ 'hrsh7th/vim-vsnip' },
+		--]]
 		{ 'github/copilot.vim' },
 		{
 			"folke/tokyonight.nvim",
@@ -114,29 +136,135 @@ require("lazy").setup({
 })
 --------------------------lazy.nvim end----------------------------
 
+--------------------------tags begin----------------------------
+local function run_job(cmd_tbl, cwd, name)
+	local ok, jid = pcall(vim.fn.jobstart, cmd_tbl, {
+		cwd = cwd,
+		stdout_buffered = true,
+		stderr_buffered = true,
+		on_stdout = function(_, _data) end,
+		on_stderr = function(_, _data) end,
+		on_exit = function(_, code)
+			if code == 0 then
+				vim.notify(name .. " finished in: " .. cwd, vim.log.levels.INFO)
+			else
+				vim.notify(name .. " failed (exit " .. tostring(code) .. ") in: " .. cwd, vim.log.levels.ERROR)
+			end
+		end,
+		detach = true,
+	})
+	if not ok or jid == 0 then
+		vim.notify("Failed to start " .. name, vim.log.levels.ERROR)
+	end
+end
+
+local function generate_ctags()
+	local cwd = vim.fn.getcwd()
+	if not cwd or cwd == "" then
+		notify("Cannot determine working directory", vim.log.levels.ERROR)
+		return
+	end
+
+	if vim.fn.executable("ctags") == 1 then
+		run_job({ "ctags", "-R",
+			"--languages=Lua,Python,JavaScript", -- adjust or remove
+			"--fields=+niazS",
+			"--extras=+q",
+			"-f", "tags", "." }, cwd, "ctags")
+	end
+
+	if vim.fn.executable("cscope") == 1 then
+		run_job({ "cscope", "-R", "-b", "-q" }, cwd, "cscope")
+	end
+end
+vim.api.nvim_create_user_command("Gentags", function() generate_ctags() end, { nargs = 0, desc = "Generate ctags in current working directory" })
+--------------------------tags end----------------------------
+
+--------------------------gutentags begin----------------------------
+--[[
+-- 安装插件后加入这些设置
+local cache_dir = vim.fn.stdpath('cache')
+vim.fn.mkdir(cache_dir .. '/tags', 'p')
+
+vim.g.gutentags_enabled = 1
+vim.g.gutentags_cache_dir = cache_dir .. '/tags'
+vim.g.gutentags_modules = {'ctags'}
+vim.g.gutentags_ctags_executable = 'ctags'
+vim.g.gutentags_ctags_extra_args = {'--languages=Lua,Python,JavaScript', '--fields=+ailmnS', '--extras=+q', '--sort=no'}
+-- 使用 rg 提速（需安装 ripgrep）
+vim.g.gutentags_file_list_command = 'rg --files --hidden --glob "!.git" --glob "!.svn" --glob "!node_modules" --glob "*.lua" --glob "*.py" --glob "*.js"'
+
+vim.g.gutentags_project_root = {'.svn', '.git', '.project', 'Makefile'}
+vim.g.gutentags_add_default_project_roots = 0
+
+local allowed_roots = {
+  "H:/L10/server/game",
+  "H:/L10/Development/QnMobile/Assets/Scripts/lua",
+}
+_G.gutentags_allowed_root_finder = function(filepath)
+	if not filepath or filepath == '' then return '' end
+	local dir = vim.fn.fnamemodify(filepath, ':p:h')
+	dir = dir:gsub('\\', '/')
+    for _, r in ipairs(allowed_roots) do
+		if vim.startswith(dir:lower(), r:lower()) then
+			return r
+		end
+    end
+	return ''
+end
+vim.g.gutentags_project_root_finder = 'v:lua.gutentags_allowed_root_finder'
+--]]
+--------------------------gutentags end----------------------------
+
 --------------------------telescope begin----------------------------
 local telescope = require('telescope')
 local actions = require('telescope.actions')
 local layout = require('telescope.actions.layout')
 telescope.setup({
 	defaults = {
-		--preview = { hide_on_startup = true },
+		file_ignore_patterns = {
+			"node_modules",
+			"%.png$", "%.jpg$", "%.jpeg$", "%.gif$",
+			".git/", ".svn/", ".hg/",
+			"tags", "vendor", "build", "dist",
+			"%.map$", "%.tlog$", "%.meta$", "%.bytes$", "%.bak$",
+			"%.exe$", "%.dll$", "%.o$", "%.obj$", "%.pdb$", "%.lib$",
+			"%.xls$", "%.xlsx$", "%.doc$", "%.docx$", "%.pdf$", "%.ppt$", "%.pptx$",
+			"%.out$",
+		},
+		preview = { hide_on_startup = true },
 		layout_strategy = 'vertical',
 		mappings = {
 			i = {
 				["<M-p>"] = layout.toggle_preview,
+				["<C-j>"] = actions.move_selection_next,
+				["<C-k>"] = actions.move_selection_previous,
 				["<C-v>"] = function(prompt_bufnr) vim.api.nvim_paste(vim.fn.getreg('+'), true, -1) end,
 			},
 			n = {
 				["<M-p>"] = layout.toggle_preview,
+				["<C-j>"] = actions.move_selection_next,
+				["<C-k>"] = actions.move_selection_previous,
 				["<C-v>"] = function(prompt_bufnr) vim.api.nvim_paste(vim.fn.getreg('+'), true, -1) end,
 			},
 		},
+	},
+	extensions = {
+		fzf = {
+			fuzzy = true,
+			override_generic_sorter = true,
+			override_file_sorter = true,
+			case_mode = "smart_case",
+		}
 	}
 })
+
+telescope.load_extension('fzf')
+
 --------------------------telescope end----------------------------
 
 --------------------------cmp begin----------------------------
+--[[
 vim.o.completeopt = "menu,menuone,noselect"
 vim.o.signcolumn = "yes"
 local cmp = require 'cmp'
@@ -219,9 +347,11 @@ cmp.setup.cmdline(':', {
 	}),
 	matching = { disallow_symbol_nonprefix_matching = false }
 })
+--]]
 --------------------------cmp end----------------------------
 
 --------------------------lspconfig begin----------------------------
+--[[
 -- 基础 capabilities
 local capabilities = vim.lsp.protocol.make_client_capabilities()
 -- 用nvim-cmp，使用它提供的 helper 来补全 capabilities
@@ -231,7 +361,7 @@ vim.lsp.config('lua_ls', {
   capabilities = capabilities,
   cmd = { 'lua-language-server' },
   filetypes = { 'lua' },
-  root_markers = { '.luarc.json', '.luarc.jsonc', '.git', '.project' },
+  root_markers = { '.project', '.git', '.luarc.json', '.luarc.jsonc' },
   settings = {
     Lua = {
 		runtime = {
@@ -240,11 +370,13 @@ vim.lsp.config('lua_ls', {
 		},
 		workspace = {
 			-- preloadFileSize 单位为 KB（例如 2000 = 2MB）
-			preloadFileSize = 2000,
+			preloadFileSize = 1000,
 			-- 可选：预加载最大文件数
-			maxPreload = 5000,
+			maxPreload = 2000,
 			-- 把 Neovim runtimepath 加进 library，以便识别内置全局/模块
 			library = vim.api.nvim_get_runtime_file("", true),
+			-- 禁用第三方库检查
+			checkThirdParty = false,
 		},
 		diagnostics = {
 			globals = {"vim"},
@@ -255,6 +387,7 @@ vim.lsp.config('lua_ls', {
 })
 
 vim.lsp.enable('lua_ls')
+--]]
 --------------------------lspconfig end----------------------------
 
 --------------------------options begin----------------------------
@@ -291,10 +424,15 @@ vim.opt.autoread = true
 
 vim.opt.backspace = "indent,eol,start"
 
+vim.opt.lines = 50
+vim.opt.columns = 200
+vim.opt.linespace = 1
+
 vim.cmd("colorscheme tokyonight")
 vim.opt.termguicolors = true
 vim.o.background = "dark"
 vim.o.guifont = "Consolas:h12"
+
 
 vim.opt.autoread = true
 vim.opt.updatetime = 1000
@@ -315,6 +453,7 @@ vim.api.nvim_create_autocmd("FileChangedShellPost",
 	end,
 })
 
+
 vim.opt.title = true
 
 local function set_term_title()
@@ -331,6 +470,14 @@ vim.api.nvim_create_autocmd({ "FocusGained", "BufEnter", "BufWritePost", "BufMod
 })
 -- 进程刚启动时也设置一次
 set_term_title()
+
+--[[
+vim.api.nvim_create_autocmd('BufWritePost', {
+  pattern = 'init.lua',
+  command = 'source <afile>',
+  group = vim.api.nvim_create_augroup('ReloadNvimConfig', { clear = true })
+})
+--]]
 --------------------------options end----------------------------
 
 --------------------------keymaps begin----------------------------
@@ -341,16 +488,16 @@ vim.keymap.set('v', '<C-x>', '"+x', {silent = true, noremap = true})
 vim.keymap.set('v', '<C-c>', '"+y', {silent = true, noremap = true})
 vim.keymap.set('n', '<C-v>', '"+P', {silent = true, noremap = true})
 vim.keymap.set('v', '<C-v>', '"_dP', {silent = true, noremap = true})
-vim.keymap.set('c', '<C-v>', '<C-r>+', {silent = true, noremap = true})
---vim.keymap.set('i', '<C-v>', '<C-r>+', {silent = true, noremap = true})
+vim.keymap.set('c', '<C-v>', '<C-r>+', {noremap = true})
+--vim.keymap.set('i', '<C-v>', '<C-r>+', {noremap = true})
 vim.keymap.set('i', '<C-v>', function()
     vim.o.paste = true
     vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes('<C-r>+', true, true, true), 'n', false)
     vim.defer_fn(function() vim.o.paste = false end, 10)
 end, {silent = true, noremap = true, desc = "paste with auto paste mode"})
 
-vim.keymap.set({'n', 'v', 'i'}, '<C-j>', ':resize +5<CR>', {silent = true, noremap = true})
-vim.keymap.set({'n', 'v', 'i'}, '<C-k>', ':resize -5<CR>', {silent = true, noremap = true})
+vim.keymap.set({'n', 'v'}, '<C-j>', ':resize +5<CR>', {silent = true, noremap = true})
+vim.keymap.set({'n', 'v'}, '<C-k>', ':resize -5<CR>', {silent = true, noremap = true})
 vim.keymap.set({'n', 'v', 'i'}, '<C-h>', ':vertical resize -10<CR>', {silent = true, noremap = true})
 vim.keymap.set({'n', 'v', 'i'}, '<C-l>', ':vertical resize +10<CR>', {silent = true, noremap = true})
 
@@ -375,22 +522,29 @@ vim.keymap.set('n', '<leader>fk', builtin.keymaps, { desc = 'Telescope keymaps' 
 vim.keymap.set({'n', 'v'}, '<leader>fr', builtin.resume, { desc = 'Resume last telescope' })
 
 vim.keymap.set('n', '<C-p>', builtin.find_files, { desc = 'Telescope find files' })
-vim.keymap.set('n', '<C-f>', builtin.live_grep, { desc = 'Telescope live grep' })
-vim.keymap.set('n', '<S-f>', builtin.grep_string, { desc = 'Telescope grep string' })
 vim.keymap.set('n', '<C-b>', builtin.buffers, { desc = 'Telescope buffers' })
 vim.keymap.set('n', '<C-g>', builtin.resume, { desc = 'Resume last telescope' })
 
-vim.keymap.set('v', '<C-f>', function()
-	vim.cmd('normal! "zy')
-	builtin.live_grep({ default_text = vim.fn.getreg('z') })
-end, {desc = "Telescope live grep" })
+vim.keymap.set('n', '<C-f>', function()
+	local input_str = vim.fn.input('Telescope grep: ')
+	if input_str ~= '' then
+		builtin.grep_string({ search = input_str })
+	end
+end, { desc = 'Telescope grep input string' })
+vim.keymap.set('n', '<S-f>', builtin.grep_string, { desc = 'Telescope grep string' })
 vim.keymap.set('v', '<S-f>', function()
 	vim.cmd('normal! "zy')
 	builtin.grep_string({ search = vim.fn.getreg('z') })
 end, { desc = 'Telescope grep string' })
 
+vim.keymap.set('n', '<C-S-f>', builtin.live_grep, { desc = 'Telescope live grep' })
+vim.keymap.set('v', '<C-S-f>', function()
+	vim.cmd('normal! "zy')
+	builtin.live_grep({ default_text = vim.fn.getreg('z') })
+end, {desc = "Telescope live grep" })
 
 -- 在 LSP 客户端附加到缓冲区时设置快捷键
+--[[
 vim.api.nvim_create_autocmd('LspAttach', {
 	group = vim.api.nvim_create_augroup('UserLspConfig', {}),
 	callback = function(ev)
@@ -402,15 +556,16 @@ vim.api.nvim_create_autocmd('LspAttach', {
 		bufmap('n', 'gd', builtin.lsp_definitions, "Goto definition")
 		--bufmap("n", "gd", vim.lsp.buf.definition, "Goto definition")
 		--bufmap("n", "gD", vim.lsp.buf.declaration, "Goto declaration")
-		-- 查找引用 (gr)
-		bufmap('n', 'gr', builtin.lsp_references, "References")
-		--bufmap("n", "gr", vim.lsp.buf.references, "References")
 		-- 实现 (gi)
 		bufmap('n', 'gi', builtin.lsp_implementations, "Implementation")
 		--bufmap("n", "gi", vim.lsp.buf.implementation, "Implementation")
 		-- 类型定义 (gf)
 		bufmap('n', 'gf', builtin.lsp_type_definitions, "Type definition")
 		--bufmap('n', 'gf', vim.lsp.buf.type_definition, "Type definition")
+
+		-- 查找引用 (gr)
+		bufmap('n', 'gr', builtin.lsp_references, "References")
+		--bufmap("n", "gr", vim.lsp.buf.references, "References")
 		-- 列出文档中的符号 (gs)
 		bufmap('n', 'gs', builtin.lsp_document_symbols, "Document Symbols")
 		-- 列出工作区中的符号 (gS)
@@ -422,9 +577,12 @@ vim.api.nvim_create_autocmd('LspAttach', {
 		--bufmap("n", "<leader>f", function() vim.lsp.buf.format({ async = true }) end, "Format")
 	end,
 })
+--]]
+
 
 vim.keymap.set('i', '<C-j>', 'copilot#Accept("\\<CR>")', { expr = true, replace_keycodes = false })
 vim.g.copilot_no_tab_map = true
+vim.keymap.set('i', '<C-k>', '<Plug>(copilot-accept-word)')
 
 vim.keymap.set('n', '<A-e>', function()
     vim.cmd("silent :!start explorer %:p:h")
@@ -442,14 +600,27 @@ vim.keymap.set('n', '<A-i>', function()
 end, {silent = true, noremap = true, desc = "Toggle inc file"})
 
 vim.keymap.set('n', '<A-r>', function()
+	local processes = { "master", "gas", "login", "ship", "house_db", "database" }
 	local path = vim.fn.expand("%:p")
-	if path and path:find("master", 1, true) then
-		vim.cmd("!reload master " .. vim.fn.expand("%:t"))
-	elseif path and path:find("gas", 1, true) then
-		vim.cmd("!reload gas " .. vim.fn.expand("%:t"))
-	elseif path and path:find("common", 1, true) then
-		vim.cmd("!reload master " .. vim.fn.expand("%:t"))
-		vim.cmd("!reload gas " .. vim.fn.expand("%:t"))
+	local file = vim.fn.expand("%:t")
+	for _, process in ipairs(processes) do
+		if path:find(process, 1, true) then
+			vim.cmd("!reload " .. process .. " " .. file)
+			return
+		end
 	end
 end, {silent = true, noremap = true, desc = "Reload file"})
+
+vim.keymap.set('n', '<A-c>', function()
+	local processes = { "master", "gas", "login", "ship", "house_db", "database" }
+	local path = vim.fn.expand("%:p")
+	local file = vim.fn.expand("%:t")
+	for _, process in ipairs(processes) do
+		if path:find(process, 1, true) then
+			vim.cmd("!check " .. process .. " " .. file)
+			vim.cmd("!runtime_check " .. process .. " " .. file)
+			return
+		end
+	end
+end, {silent = true, noremap = true, desc = "Check file"})
 --------------------------keymaps end----------------------------
