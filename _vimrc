@@ -2,12 +2,10 @@ set encoding=utf-8
 set fileencodings=ucs-bom,utf-8,chinese
 "set fileencodings=ucs-bom,utf-8,utf-16,gb2312,gbk,big5,gb18030,latin1
 "set fileencodings=ucs-bom,utf-8,gb2312,gbk,big5,gb18030,cp936
-"set nobomb
+
 set langmenu=zh_CN.UTF-8
 let $LANG='zh_CN.UTF-8'
-"language message zh_CN.UTF-8
 
-"source $VIMRUNTIME/vimrc_example.vim
 source $VIMRUNTIME/mswin.vim
 source $VIMRUNTIME/delmenu.vim
 source $VIMRUNTIME/menu.vim
@@ -79,6 +77,8 @@ filetype off                  " required
 
 call plug#begin()
 
+Plug 'morhetz/gruvbox'
+
 Plug 'preservim/nerdtree'
 let g:NERDTreeChDirMode=2
 map <silent> <C-n> :NERDTreeToggle<CR>
@@ -94,25 +94,22 @@ map <silent> <M-t> :TlistToggle<CR>
 Plug 'ervandew/supertab'
 let g:SuperTabDefaultCompletionType='context'
 
-Plug 'github/copilot.vim'
-imap <silent><script><expr> <C-J> copilot#Accept("\<CR>")
-let g:copilot_no_tab_map = v:true
+Plug 'vim-airline/vim-airline'
+Plug 'vim-airline/vim-airline-themes'
+let g:airline_theme='gruvbox'
 
 Plug 'easymotion/vim-easymotion'
 map f <Plug>(easymotion-prefix)
 
-"与系统剪贴板冲突
-"Plug 'terryma/vim-multiple-cursors'
-"let g:multi_cursor_use_default_mapping=0
-"let g:multi_cursor_start_word_key      = '<A-n>'
-"let g:multi_cursor_select_all_word_key = '<A-a>'
-"let g:multi_cursor_start_key           = 'g<A-n>'
-"let g:multi_cursor_select_all_key      = 'g<A-a>'
-"let g:multi_cursor_next_key            = '<A-n>'
-"let g:multi_cursor_prev_key            = '<A-p>'
-"let g:multi_cursor_skip_key            = '<A-x>'
-"let g:multi_cursor_quit_key            = '<Esc>'
-"set selection=inclusive
+Plug 'github/copilot.vim'
+let g:copilot_workspace_folders = ["H:/L10/server", "H:/L10/Development/QnMobile/Assets/Scripts"]
+imap <silent><script><expr> <C-J> copilot#Accept("\<CR>")
+imap <C-K> <Plug>(copilot-accept-word)
+imap <C-L> <Plug>(copilot-accept-line)
+imap <C-H> <Plug>(copilot-dismiss)
+imap <M-J> <Plug>(copilot-next)
+imap <M-K> <Plug>(copilot-previous)
+let g:copilot_no_tab_map = v:true
 
 Plug 'Yggdroot/LeaderF', { 'do': ':LeaderfInstallCExtension' }
 let g:Lf_HideHelp = 1
@@ -121,29 +118,35 @@ let g:Lf_UseVersionControlTool = 0
 let g:Lf_DefaultExternalTool = 'rg'
 let g:Lf_IgnoreCurrentBufferName = 1
 let g:Lf_WindowPosition = 'popup'
-let g:Lf_PopupWidth = 0.75
-let g:Lf_PopupHeight = 0.4
-let g:Lf_PopupPosition = [0, 0]
 let g:Lf_PopupPreviewPosition = 'top'
-let g:Lf_PreviewInPopup = 1
-let g:Lf_WindowHeight = 0.30
-let g:Lf_StlSeparator = { 'left': '', 'right': '' , 'font': '' }
-let g:Lf_PreviewResult = {
-	\ 'File': 0,
-	\ 'Buffer': 0,
-	\ 'Mru': 0,
-	\ 'Tag': 0,
-	\ 'BufTag': 1,
-	\ 'Function': 1,
-	\ 'Line': 0,
-	\ 'Colorscheme': 0,
-	\ 'Rg': 0,
-	\ 'Gtags': 0
-	\}
 let g:Lf_WildIgnore = {
-	\ 'dir': ['.svn','.git','.hg'],
-    \ 'file': ['*.map','*.tlog','*.bak','*.exe','*.o','*.so','*.dll','*.sln','*.sdf','*.opensdf','*.suo','*.vcxproj','*.filters','*.xls','*.xlsx','*.doc','*.docx','*.ppt','*.pptx','*.meta','*.bytes','*.pdb','*.out']
-	\}
+	\'dir': [
+		\'.svn',
+		\'.git',
+		\'.hg',
+		\'node_modules'
+	\],
+    \'file': [
+		\'*.map',
+		\'*.tlog',
+		\'*.bak',
+		\'*.exe',
+		\'*.o',
+		\'*.so',
+		\'*.dll',
+		\'*.sln',
+		\'*.sdf',
+		\'*.opensdf',
+		\'*.suo',
+		\'*.vcxproj',
+		\'*.filters',
+		\'*.meta',
+		\'*.bytes',
+		\'*.obj',
+		\'*.pdb',
+		\'*.out'
+	\]
+\}
 let g:Lf_WorkingDirectoryMode = 'c'
 let g:Lf_RootMarkers = []
 let g:Lf_ShortcutF = '<C-P>'
@@ -155,11 +158,14 @@ noremap <leader>fl :<C-U><C-R>=printf("Leaderf line %s", "")<CR><CR>
 let g:Lf_RgConfig = [
 	\ "--max-columns-preview",
 	\ "--hidden",
-	\ "--glob=!.svn",
+	\ "--glob=!.svn/*",
+	\ "--glob=!.git/*",
+	\ "--glob=!node_modules/*",
 	\ "--glob=!*.map",
 	\ "--glob=!*.tlog",
 	\ "--glob=!*.meta",
 	\ "--glob=!*.bytes",
+	\ "--glob=!*.obj"
 	\]
 noremap <leader>ff :<C-U><C-R>=printf("Leaderf! rg -e ")<CR>
 noremap <C-F> :<C-U><C-R>=printf("Leaderf! rg -F ")<CR>
@@ -179,51 +185,16 @@ noremap <leader>fu :<C-U><C-R>=printf("Leaderf gtags --update")<CR><CR>
 
 call plug#end()
 
-"Plugin 'ctrlpvim/ctrlp.vim'
-"let g:ctrlp_working_path_mode = 'wa'
-"let g:ctrlp_custom_ignore={
-"    \ 'dir':  '\v[\/]\.(git|hg|svn)$',
-"    \ 'file': '\v\.(exe|so|dll|xls|xlsx|doc|docx|meta|bytes|ppt|pptx|xml|pdb|pem|config|jsx|include|bat|ini|txt|ddef|release|gradle|java|m|cmd)$',
-"    \ }
+filetype plugin on    " required
+filetype indent on    " required
 
-"Plugin 'dyng/ctrlsf.vim'
-"let g:ctrlsf_ackprg='rg'
-"let g:ctrlsf_absolute_file_path=0
-"let g:ctrlsf_auto_close=0
-"let g:ctrlsf_case_sensitive='no'
-"let g:ctrlsf_default_view_mode='compact'
-"let g:ctrlsf_ignore_dir=['tags']
-"let g:ctrlsf_default_root='cwd'
-"let g:ctrlsf_search_mode='async'
-"let g:ctrlsf_parse_speed=200
-"let g:ctrlsf_context='-C 3'
-
-"nmap <C-f> <Plug>CtrlSFPrompt
-"nmap <S-f> <Plug>CtrlSFCwordPath
-"vmap <S-f> <Plug>CtrlSFVwordPath
-"nmap <M-f> :CtrlSFToggle<CR>
-
-"nmap     <C-f>f <Plug>CtrlSFPrompt
-"vmap     <C-f>f <Plug>CtrlSFVwordPath
-"vmap     <C-f>F <Plug>CtrlSFVwordExec
-"nmap     <C-f>n <Plug>CtrlSFCwordPath
-"nmap     <C-f>p <Plug>CtrlSFPwordPath
-"nnoremap <C-f>o :CtrlSFOpen<CR>
-"nnoremap <C-f>t :CtrlSFToggle<CR>
-"inoremap <C-f>t <Esc>:CtrlSFToggle<CR>
-
-filetype plugin indent on    " required
-
-
-"colorscheme solarized
-colorscheme desert
 syntax enable
 syntax on
+colorscheme gruvbox
 
 set lines=50 columns=200 linespace=1
 set background=dark
 set guifont=consolas:h12:cANSI
-"set guifontwide=NSimSun:h10:cANSI
 
 set foldmethod=indent
 set nofoldenable
@@ -232,7 +203,6 @@ set backspace=2		" more powerful backspacing
 set tabstop=4
 set shiftwidth=4
 set softtabstop=4
-"set expandtab
 set autoindent
 
 set noundofile
@@ -245,12 +215,10 @@ set incsearch
 set showmatch
 set wildmenu
 
-"set nowrapscan
 set noendofline
 
 set ruler
 
-set statusline=%F%m%r%h%w%=\ [FORMAT=%{&ff}:%{(&fenc!=\"\"?&fenc:&enc).((exists(\"+bomb\")\ &&\ &bomb)?\"+\":\"\")}]\ [ASCII=%03.3b]\ [POS=%l,%v\ \ %p%%]
 set laststatus=2
 
 set exrc
@@ -260,11 +228,7 @@ set number
 set cursorline
 "set cursorcolumn 
 
-"set splitbelow
-"set splitright
-
 set tags=./tags;,tags;
-"set autochdir
 set clipboard+=unnamed
 set paste
 
@@ -285,7 +249,7 @@ highlight CursorIM guifg=NONE guibg=SkyBlue gui=NONE
 set iminsert=0
 set imsearch=-1
 
-"use continuous paste(xnoremap p "0p)
+"continuous paste(xnoremap p "0p)
 xnoremap p pgvy
 
 inoremap <M-j> <Down>
@@ -304,75 +268,6 @@ map <silent> <C-Left> :vertical resize-10<CR>
 map <silent> <C-Right> :vertical resize+10<CR>
 
 map <silent> <C-t> :tabnew<CR>
-
-"run server
-function RunServer()
-	silent exec "!start runserver"
-endfunction
-nmap <F3> :call RunServer()<CR>
-
-function RunServer_3D()
-	silent exec "!start run3dserver"
-endfunction
-nmap <F4> :call RunServer_3D()<CR>
-
-"close server
-function CloseServer()
-	silent exec "!start closeserver"
-endfunction
-nmap <F6> :call CloseServer()<CR>
-
-"server reload, only master and gas
-function ReloadServer()
-	if match(expand("%:p"),"master") != -1
-		exec "!reload master " . expand("%:t")
-	elseif match(expand("%:p"),"gas") != -1
-		exec "!reload gas " . expand("%:t")
-	elseif match(expand("%:p"),"common") != -1
-		exec "!reload master " . expand("%:t")
-		exec "!reload gas " . expand("%:t")
-	endif
-endfunction
-nmap <M-r> :call ReloadServer()<CR>
-
-"server check
-function CheckServer()
-	if match(expand("%:p"),"master") != -1
-		exec "!check master " . expand("%:t")
-	elseif match(expand("%:p"),"gas") != -1
-		exec "!check gas " . expand("%:t")
-	elseif match(expand("%:p"),"login") != -1
-		exec "!check login " . expand("%:t")
-	elseif match(expand("%:p"),"ship") != -1
-		exec "!check ship " . expand("%:t")
-	elseif match(expand("%:p"),"house_db") != -1
-		exec "!check house_db " . expand("%:t")
-	elseif match(expand("%:p"),"database") != -1
-		exec "!check database " . expand("%:t")
-	elseif match(expand("%:p"),"common") != -1
-		exec "!check master " . expand("%:t") . " common"
-		exec "!check gas " . expand("%:t") . " common"
-		exec "!check login " . expand("%:t") . " common"
-	endif
-	if match(expand("%:p"),"master") != -1
-		exec "!runtime_check master " . expand("%:t")
-	elseif match(expand("%:p"),"gas") != -1
-		exec "!runtime_check gas " . expand("%:t")
-	elseif match(expand("%:p"),"login") != -1
-		exec "!runtime_check login " . expand("%:t")
-	elseif match(expand("%:p"),"ship") != -1
-		exec "!runtime_check ship " . expand("%:t")
-	elseif match(expand("%:p"),"house_db") != -1
-		exec "!runtime_check house_db " . expand("%:t")
-	elseif match(expand("%:p"),"database") != -1
-		exec "!runtime_check database " . expand("%:t")
-	elseif match(expand("%:p"),"common") != -1
-		exec "!runtime_check master " . expand("%:t") . " common"
-		exec "!runtime_check gas " . expand("%:t") . " common"
-		exec "!runtime_check login " . expand("%:t") . " common"
-	endif
-endfunction
-nmap <M-c> :call CheckServer()<CR>
 
 "open folder of current file
 function Folder()
@@ -395,6 +290,64 @@ function SwitchInc()
 	endif
 endfunction
 nmap <M-i> :call SwitchInc()<CR>
+
+
+"run server
+function RunServer()
+	silent exec "!start runserver"
+endfunction
+nmap <F3> :call RunServer()<CR>
+
+function RunServer_3D()
+	silent exec "!start run3dserver"
+endfunction
+nmap <F4> :call RunServer_3D()<CR>
+
+"close server
+function CloseServer()
+	silent exec "!start closeserver"
+endfunction
+nmap <F6> :call CloseServer()<CR>
+
+"server reload, only master and gas
+function ReloadServer()
+	let processes = ["master", "gas", "login", "ship", "house_db", "database"]
+	let pathStr = expand("%:p")
+    let fileName = expand("%:t")
+
+	for process in processes
+		if stridx(pathStr,process) != -1
+			exec "silent !reload " . process . " " . fileName
+			echo "reloaded " . process . " " . fileName
+			return
+		endif
+	endfor
+endfunction
+nmap <silent> <M-r> :call ReloadServer()<CR>
+
+"server check
+function CheckServer()
+	let processes = ["master", "gas", "login", "ship", "house_db", "database"]
+	let pathStr = expand("%:p")
+	let fileName = expand("%:t")
+
+	for process in processes
+		if stridx(pathStr,process) != -1
+			exec "silent !check " . process . " " . fileName
+			echo "checked " . process . " " . fileName
+			return
+		endif
+	endfor
+
+	if stridx(pathStr, "common") != -1
+		for process in ["master", "gas", "login"]
+			exec "silent !check " . process . " " . fileName . " common"
+			echo "checked " . process . " " . fileName . " common"
+		endfor
+		return
+	endif
+endfunction
+nmap <silent> <M-c> :call CheckServer()<CR>
 
 "kevon's vim edit
 function KVimEdit(argName)
