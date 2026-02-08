@@ -1,6 +1,3 @@
-vim.g.loaded_netrw = 1
-vim.g.loaded_netrwPlugin = 1
-
 vim.api.nvim_create_autocmd("VimEnter", {
 	callback = function()
 		local argc = vim.fn.argc()
@@ -10,6 +7,9 @@ vim.api.nvim_create_autocmd("VimEnter", {
 		vim.cmd("lcd "..vim.fn.fnameescape(dir))
 	end,
 })
+
+vim.g.loaded_netrw = 1
+vim.g.loaded_netrwPlugin = 1
 
 --------------------------lazy.nvim begin----------------------------
 local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
@@ -28,19 +28,6 @@ if not (vim.uv or vim.loop).fs_stat(lazypath) then
 end
 vim.opt.rtp:prepend(lazypath)
 
-local function on_nvim_tree_attach(bufnr)
-	local api = require "nvim-tree.api"
-
-	local function opts(desc)
-		return { desc = "nvim-tree: " .. desc, buffer = bufnr, noremap = true, silent = true, nowait = true }
-    end
-
-	-- default mappings
-	api.config.mappings.default_on_attach(bufnr)
-
-	-- custom mappings
-end
-
 require("lazy").setup({
 	spec = {
 		{
@@ -49,10 +36,19 @@ require("lazy").setup({
 			opts = {},
 		},
 		{
-			"nvim-tree/nvim-tree.lua",
+			"folke/tokyonight.nvim",
+			lazy = false,
+			priority = 1000,
+			opts = {},
+		},
+		{
+			"nvim-tree/nvim-tree.lua", tag = "v1.15.0",
 			dependencies = { 'nvim-tree/nvim-web-devicons' },
 			opts = {
-				on_attach = on_nvim_tree_attach,
+				on_attach = function(bufnr)
+					local api = require "nvim-tree.api"
+					api.config.mappings.default_on_attach(bufnr)
+				end,
 				sync_root_with_cwd = true,
 				actions = {
 					change_dir = {
@@ -61,34 +57,15 @@ require("lazy").setup({
 						restrict_above_cwd = false,
 					},
 				},
+				update_focused_file = {
+					enable = true,
+					update_root = true,
+				},
 			},
 		},
 		{
-			"nvim-treesitter/nvim-treesitter",
-			branch = 'master',
-			lazy = false,
-			build = ':TSUpdate',
-			opts = {
-				ensure_installed = { "c", "cpp", "lua" },
-				highlight = { enable = true },
-			},
-		},
-		{
-			"nvim-telescope/telescope.nvim", tag = '0.1.8',
-			dependencies = { 'nvim-lua/plenary.nvim' },
-		},
-		{
-			'nvim-telescope/telescope-fzf-native.nvim',
-			build = 'cmake -S. -Bbuild -DCMAKE_BUILD_TYPE=Release && cmake --build build --config Release --target install'
-		},
-		--[[
-		{
-			'ludovicchabant/vim-gutentags',
-			lazy = false,
-		},
-		--]]
-		{
-			'ervandew/supertab',
+			"ibhagwan/fzf-lua",
+			dependencies = { "nvim-tree/nvim-web-devicons" },
 		},
 		{
 			'ggandor/leap.nvim',
@@ -97,36 +74,23 @@ require("lazy").setup({
 				require('leap').add_default_mappings()
 			end,
 		},
+		{ 'github/copilot.vim' },
 		--[[
 		{
-			"mason-org/mason.nvim",
-			config = true,
+			"nvim-telescope/telescope.nvim", tag = "v0.2.1",
+			dependencies = { 'nvim-lua/plenary.nvim' },
 		},
 		{
-			"mason-org/mason-lspconfig.nvim",
-			opts = {
-				ensure_installed = { "lua_ls", "pyright" },
-				automatic_enable = true,
-			},
-			dependencies = {
-				"mason-org/mason.nvim",
-				"neovim/nvim-lspconfig",
-			},
+			'nvim-telescope/telescope-fzf-native.nvim',
+			build = 'cmake -S. -Bbuild -DCMAKE_BUILD_TYPE=Release && cmake --build build --config Release --target install'
 		},
-		{ "hrsh7th/cmp-nvim-lsp" },
-		{ "hrsh7th/cmp-buffer" },
-		{ "hrsh7th/cmp-path" },
-		{ 'hrsh7th/nvim-cmp' },
-		{ 'hrsh7th/cmp-vsnip' },
-		{ 'hrsh7th/vim-vsnip' },
+		{
+			'ludovicchabant/vim-gutentags',
+		},
+		{
+			'ervandew/supertab',
+		},
 		--]]
-		{ 'github/copilot.vim' },
-		{
-			"folke/tokyonight.nvim",
-			lazy = false,
-			priority = 1000,
-			opts = {},
-		},
 	},
 	install = {},
 	checker = {
@@ -136,7 +100,209 @@ require("lazy").setup({
 })
 --------------------------lazy.nvim end----------------------------
 
---------------------------tags begin----------------------------
+--------------------------nvimtree begin----------------------------
+vim.keymap.set('n', '<C-n>', ':NvimTreeToggle<CR>', {silent = true, noremap = true})
+vim.keymap.set('n', '<A-f>', ':NvimTreeFindFile<CR>', {silent = true, noremap = true})
+--------------------------nvimtree end----------------------------
+
+--------------------------fzf-lua begin----------------------------
+local fzf_lua = require("fzf-lua")
+fzf_lua.setup({
+	winopts = {
+		preview = {
+			vertical = "down:45%",
+			layout = "vertical",
+		},
+	},
+	files = {
+		fd_opts = "--color=never --hidden --follow --type f" ..
+			" --exclude .git" ..
+			" --exclude .svn" ..
+			" --exclude node_modules",
+	},
+	grep = {
+		rg_opts = "--line-number --column --no-heading --with-filename --color=always --smart-case" ..
+			" --glob !.git/**" ..
+			" --glob !.svn/**" ..
+			" --glob !node_modules/**",
+	},
+})
+vim.keymap.set('n', '<leader>ff', function() fzf_lua.files() end, { desc = 'FzfLua files' })
+vim.keymap.set('n', '<leader>fg', function() fzf_lua.live_grep() end, { desc = 'FzfLua live_grep' })
+vim.keymap.set('n', '<leader>fw', function() fzf_lua.grep_cword() end, { desc = 'FzfLua grep cword' })
+vim.keymap.set('n', '<leader>ft', function() fzf_lua.help_tags() end, { desc = 'FzfLua help_tags' })
+vim.keymap.set('n', '<leader>fb', function() fzf_lua.buffers() end, { desc = 'FzfLua buffers' })
+vim.keymap.set('n', '<leader>fk', function() fzf_lua.keymaps() end, { desc = 'FzfLua keymaps' })
+vim.keymap.set('n', '<leader>fhs', function() fzf_lua.search_history() end, { desc = 'FzfLua search_history' })
+vim.keymap.set('n', '<leader>fhc', function() fzf_lua.command_history() end, { desc = 'FzfLua command_history' })
+vim.keymap.set('n', '<leader>fho', function() fzf_lua.oldfiles() end, { desc = 'FzfLua oldfils' })
+
+vim.keymap.set('n', '<C-p>', function() fzf_lua.files() end, { desc = 'FzfLua files' })
+vim.keymap.set('n', '<C-b>', function() fzf_lua.buffers() end, { desc = 'FzfLua buffers' })
+vim.keymap.set('n', '<C-g>', function() fzf_lua.resume() end, { desc = 'FzfLua resume' })
+
+vim.keymap.set({'n', 'v', 'i'}, '<C-f>', function()
+	local input_str = vim.fn.input('FzfLua grep: ')
+	if input_str ~= '' then
+		fzf_lua.grep({ search = input_str })
+	end
+end, { desc = 'FzfLua grep input' })
+
+vim.keymap.set('n', '<S-f>', function() fzf_lua.grep_cword() end, { desc = 'FzfLua grep cword' })
+vim.keymap.set('v', '<S-f>', function()
+	vim.cmd('normal! "zy')
+	fzf_lua.grep({ search = vim.fn.getreg('z') })
+end, { desc = 'FzfLua grep selected' })
+
+vim.keymap.set('n', '<C-S-f>', function() fzf_lua.live_grep() end, { desc = 'FzfLua live_grep input' })
+vim.keymap.set('v', '<C-S-f>', function()
+	vim.cmd('normal! "zy')
+	fzf_lua.live_grep({ search = vim.fn.getreg('z') })
+end, { desc = 'FzfLua live_grep selected' })
+--------------------------fzf-lua end----------------------------
+
+--------------------------telescope begin----------------------------
+--[=[
+local telescope = require('telescope')
+local actions = require('telescope.actions')
+local layout = require('telescope.actions.layout')
+telescope.setup({
+	defaults = {
+		file_ignore_patterns = {
+			"node_modules",
+			"%.git/", "%.svn/", "%.hg/",
+			"tags", "build/", "dist/",
+			"%.map$", "%.tlog$", "%.meta$", "%.bytes$", "%.bak$",
+			"%.exe$", "%.dll$", "%.o$", "%.obj$", "%.pdb$", "%.lib$",
+			"%.xls$", "%.xlsx$", "%.doc$", "%.docx$", "%.pdf$", "%.ppt$", "%.pptx$",
+			"%.out$"
+		},
+		vimgrep_arguments = {
+			'rg',
+			"--color=never",
+			"--no-heading",
+		  	'--with-filename',
+		  	'--line-number',
+			'--column',
+		  	'--smart-case',
+		  	'--glob=!**/.git/**',
+		  	"--glob=!**/.svn/**",
+			"--glob=!**/node_modules/**",
+		},
+		preview = {
+			check_mime_type = true,
+			filesize_limit = 1,
+			timeout = 500,
+			hide_on_startup = true,
+			treesitter = false,
+		},
+		history = {
+			limit = 100,
+		},
+		cache_picker = false,
+		layout_strategy = 'vertical',
+		scroll_strategy = 'limit',
+		mappings = {
+			i = {
+				["<M-p>"] = layout.toggle_preview,
+				["<M-d>"] = actions.preview_scrolling_down,
+				["<M-u>"] = actions.preview_scrolling_up,
+				["<C-j>"] = actions.move_selection_next,
+				["<C-k>"] = actions.move_selection_previous,
+				["<C-d>"] = actions.results_scrolling_down,
+				["<C-u>"] = actions.results_scrolling_up,
+				["<C-v>"] = function(prompt_bufnr) vim.api.nvim_paste(vim.fn.getreg('+'), true, -1) end,
+			},
+			n = {
+				["<M-p>"] = layout.toggle_preview,
+				["<M-d>"] = actions.preview_scrolling_down,
+				["<M-u>"] = actions.preview_scrolling_up,
+				["<C-j>"] = actions.move_selection_next,
+				["<C-k>"] = actions.move_selection_previous,
+				["<C-d>"] = actions.results_scrolling_down,
+				["<C-u>"] = actions.results_scrolling_up,
+				["<C-v>"] = function(prompt_bufnr) vim.api.nvim_paste(vim.fn.getreg('+'), true, -1) end,
+			},
+		},
+	},
+	--[[
+	extensions = {
+		fzf = {
+			fuzzy = true,
+			override_generic_sorter = true,
+			override_file_sorter = true,
+			case_mode = "smart_case",
+		}
+	},
+	--]]
+})
+
+--telescope.load_extension('fzf')
+
+local builtin = require('telescope.builtin')
+vim.keymap.set('n', '<leader>ff', builtin.find_files, { desc = 'Telescope find files' })
+vim.keymap.set('n', '<leader>fg', builtin.live_grep, { desc = 'Telescope live grep' })
+vim.keymap.set('n', '<leader>fw', builtin.grep_string, { desc = 'Telescope grep string' })
+vim.keymap.set('n', '<leader>fb', builtin.buffers, { desc = 'Telescope buffers' })
+vim.keymap.set('n', '<leader>ft', builtin.help_tags, { desc = 'Telescope help tags' })
+vim.keymap.set('n', '<leader>fh', builtin.search_history, { desc = 'Telescope search history' })
+vim.keymap.set('n', '<leader>fk', builtin.keymaps, { desc = 'Telescope keymaps' })
+vim.keymap.set({'n', 'v'}, '<leader>fr', builtin.resume, { desc = 'Resume last telescope' })
+
+vim.keymap.set('n', '<C-p>', builtin.find_files, { desc = 'Telescope find files' })
+vim.keymap.set('n', '<C-b>', builtin.buffers, { desc = 'Telescope buffers' })
+vim.keymap.set('n', '<C-g>', builtin.resume, { desc = 'Resume last telescope' })
+
+vim.keymap.set('n', '<C-f>', function()
+	local input_str = vim.fn.input('Telescope grep: ')
+	if input_str ~= '' then
+		builtin.grep_string({ search = input_str })
+	end
+end, { desc = 'Telescope grep input string' })
+vim.keymap.set('n', '<S-f>', builtin.grep_string, { desc = 'Telescope grep string' })
+vim.keymap.set('v', '<S-f>', function()
+	vim.cmd('normal! "zy')
+	builtin.grep_string({ search = vim.fn.getreg('z') })
+end, { desc = 'Telescope grep string' })
+
+vim.keymap.set('n', '<C-S-f>', builtin.live_grep, { desc = 'Telescope live grep' })
+vim.keymap.set('v', '<C-S-f>', function()
+	vim.cmd('normal! "zy')
+	builtin.live_grep({ default_text = vim.fn.getreg('z') })
+end, {desc = "Telescope live grep" })
+--]=]
+--------------------------telescope end----------------------------
+
+--------------------------gutentags begin----------------------------
+-- 安装插件后加入这些设置
+--[[
+local cache_dir = vim.fn.stdpath('cache')
+vim.fn.mkdir(cache_dir .. '/tags', 'p')
+
+vim.g.gutentags_enabled = 0
+vim.g.gutentags_cache_dir = cache_dir .. '/tags'
+vim.g.gutentags_modules = {'ctags'}
+vim.g.gutentags_ctags_executable = 'ctags'
+vim.g.gutentags_ctags_extra_args = {'--languages=Lua', '--fields=+ailmnS', '--extras=+q', '--sort=no'}
+vim.g.gutentags_file_list_command = 'rg --files --hidden --glob "!.git" --glob "!.svn" --glob "!node_modules" --glob "*.lua"'
+vim.g.gutentags_project_root = {'.svn', '.git', '.project'}
+
+vim.g.gutentags_generate_on_new	         = 0
+vim.g.gutentags_generate_on_write        = 0
+vim.g.gutentags_generate_on_missing      = 0
+vim.g.gutentags_generate_on_empty_buffer = 0
+
+vim.keymap.set('n', '<leader>tu', function()
+	vim.g.gutentags_enabled = 1
+	vim.cmd('GutentagsUpdate')
+	vim.g.gutentags_enabled = 0
+	vim.notify('Tags update manually', vim.log.levels.INFO)
+end, { desc = 'Gutentags Update' })
+--]]
+--------------------------gutentags end----------------------------
+
+--------------------------ctags begin----------------------------
+--[[
 local function run_job(cmd_tbl, cwd, name)
 	local ok, jid = pcall(vim.fn.jobstart, cmd_tbl, {
 		cwd = cwd,
@@ -178,217 +344,20 @@ local function generate_ctags()
 	end
 end
 vim.api.nvim_create_user_command("Gentags", function() generate_ctags() end, { nargs = 0, desc = "Generate ctags in current working directory" })
---------------------------tags end----------------------------
-
---------------------------gutentags begin----------------------------
---[[
--- 安装插件后加入这些设置
-local cache_dir = vim.fn.stdpath('cache')
-vim.fn.mkdir(cache_dir .. '/tags', 'p')
-
-vim.g.gutentags_enabled = 1
-vim.g.gutentags_cache_dir = cache_dir .. '/tags'
-vim.g.gutentags_modules = {'ctags'}
-vim.g.gutentags_ctags_executable = 'ctags'
-vim.g.gutentags_ctags_extra_args = {'--languages=Lua,Python,JavaScript', '--fields=+ailmnS', '--extras=+q', '--sort=no'}
--- 使用 rg 提速（需安装 ripgrep）
-vim.g.gutentags_file_list_command = 'rg --files --hidden --glob "!.git" --glob "!.svn" --glob "!node_modules" --glob "*.lua" --glob "*.py" --glob "*.js"'
-
-vim.g.gutentags_project_root = {'.svn', '.git', '.project', 'Makefile'}
-vim.g.gutentags_add_default_project_roots = 0
-
-local allowed_roots = {
-  "H:/L10/server/game",
-  "H:/L10/Development/QnMobile/Assets/Scripts/lua",
-}
-_G.gutentags_allowed_root_finder = function(filepath)
-	if not filepath or filepath == '' then return '' end
-	local dir = vim.fn.fnamemodify(filepath, ':p:h')
-	dir = dir:gsub('\\', '/')
-    for _, r in ipairs(allowed_roots) do
-		if vim.startswith(dir:lower(), r:lower()) then
-			return r
-		end
-    end
-	return ''
-end
-vim.g.gutentags_project_root_finder = 'v:lua.gutentags_allowed_root_finder'
 --]]
---------------------------gutentags end----------------------------
+--------------------------ctags end----------------------------
 
---------------------------telescope begin----------------------------
-local telescope = require('telescope')
-local actions = require('telescope.actions')
-local layout = require('telescope.actions.layout')
-telescope.setup({
-	defaults = {
-		file_ignore_patterns = {
-			"node_modules",
-			"%.png$", "%.jpg$", "%.jpeg$", "%.gif$",
-			".git/", ".svn/", ".hg/",
-			"tags", "vendor", "build", "dist",
-			"%.map$", "%.tlog$", "%.meta$", "%.bytes$", "%.bak$",
-			"%.exe$", "%.dll$", "%.o$", "%.obj$", "%.pdb$", "%.lib$",
-			"%.xls$", "%.xlsx$", "%.doc$", "%.docx$", "%.pdf$", "%.ppt$", "%.pptx$",
-			"%.out$",
-		},
-		preview = { hide_on_startup = true },
-		layout_strategy = 'vertical',
-		mappings = {
-			i = {
-				["<M-p>"] = layout.toggle_preview,
-				["<C-j>"] = actions.move_selection_next,
-				["<C-k>"] = actions.move_selection_previous,
-				["<C-v>"] = function(prompt_bufnr) vim.api.nvim_paste(vim.fn.getreg('+'), true, -1) end,
-			},
-			n = {
-				["<M-p>"] = layout.toggle_preview,
-				["<C-j>"] = actions.move_selection_next,
-				["<C-k>"] = actions.move_selection_previous,
-				["<C-v>"] = function(prompt_bufnr) vim.api.nvim_paste(vim.fn.getreg('+'), true, -1) end,
-			},
-		},
-	},
-	extensions = {
-		fzf = {
-			fuzzy = true,
-			override_generic_sorter = true,
-			override_file_sorter = true,
-			case_mode = "smart_case",
-		}
-	}
-})
+--------------------------copilot begin----------------------------
+vim.keymap.set('i', '<C-j>', 'copilot#Accept("\\<CR>")', { expr = true, replace_keycodes = false })
+vim.keymap.set('i', '<C-K>', '<Plug>(copilot-accept-word)')
+vim.keymap.set('i', '<C-L>', '<Plug>(copilot-accept-line)')
+vim.keymap.set('i', '<C-H>', '<Plug>(copilot-dismiss)')
+vim.keymap.set('i', '<M-J>', '<Plug>(copilot-next)')
+vim.keymap.set('i', '<M-K>', '<Plug>(copilot-previous)')
+vim.g.copilot_no_tab_map = true
+vim.g.copilot_workspace_folders = {"H:/L10/server/game", "H:/L10/Development/QnMobile/Assets/Scripts/lua"}
 
-telescope.load_extension('fzf')
-
---------------------------telescope end----------------------------
-
---------------------------cmp begin----------------------------
---[[
-vim.o.completeopt = "menu,menuone,noselect"
-vim.o.signcolumn = "yes"
-local cmp = require 'cmp'
-cmp.setup({
-	snippet = {
-		-- REQUIRED - you must specify a snippet engine
-		expand = function(args)
-			vim.fn["vsnip#anonymous"](args.body) -- For `vsnip` users.
-			-- require('luasnip').lsp_expand(args.body) -- For `luasnip` users.
-			-- vim.snippet.expand(args.body) -- For native neovim snippets (Neovim v0.10+)
-		end,
-	},
-    window = {
-		-- completion = cmp.config.window.bordered(),
-		-- documentation = cmp.config.window.bordered(),
-    },
-    mapping = cmp.mapping.preset.insert({
-		['<C-b>'] = cmp.mapping.scroll_docs(-4),
-		['<C-f>'] = cmp.mapping.scroll_docs(4),
-      	['<C-Space>'] = cmp.mapping.complete(),
-      	['<C-e>'] = cmp.mapping.abort(),
-      	['<CR>'] = cmp.mapping.confirm({ select = true }), -- Accept currently selected item. Set `select` to `false` to only confirm explicitly selected items.
-		["<Tab>"] = cmp.mapping(function(fallback)
-			if cmp.visible() then
-				cmp.select_next_item()
-			--elseif luasnip.expand_or_jumpable() then
-			--	luasnip.expand_or_jump()
-			else
-				fallback()
-			end
-		end, { "i", "s" }),
-		["<S-Tab>"] = cmp.mapping(function(fallback)
-			if cmp.visible() then
-				cmp.select_prev_item()
-			--elseif luasnip.jumpable(-1) then
-			--	luasnip.jump(-1)
-			else
-				fallback()
-			end
-		end, { "i", "s" }),
-    }),
-    sources = cmp.config.sources({
-		{ name = 'nvim_lsp' },
-      	{ name = 'vsnip' }, -- For vsnip users.
-      	-- { name = 'luasnip' }, -- For luasnip users.
-	},
-	{
-		{ name = 'buffer' },
-    }),
-	-- 可选：自动完成时显示来源
-	formatting = {
-		format = function(entry, vim_item)
-		  vim_item.menu = ({
-			buffer = "[buf]",
-			nvim_lsp = "[LSP]",
-			luasnip = "[snip]",
-			path = "[path]",
-		  })[entry.source.name]
-		  return vim_item
-		end,
-	},
-})
-
--- Use buffer source for `/` and `?` (if you enabled `native_menu`, this won't work anymore).
-cmp.setup.cmdline({ '/', '?' }, {
-	mapping = cmp.mapping.preset.cmdline(),
-	sources = {
-		{ name = 'buffer' }
-	}
-})
-
--- Use cmdline & path source for ':' (if you enabled `native_menu`, this won't work anymore).
-cmp.setup.cmdline(':', {
-	mapping = cmp.mapping.preset.cmdline(),
-	sources = cmp.config.sources({
-		{ name = 'path' }
-	},
-	{
-		{ name = 'cmdline' }
-	}),
-	matching = { disallow_symbol_nonprefix_matching = false }
-})
---]]
---------------------------cmp end----------------------------
-
---------------------------lspconfig begin----------------------------
---[[
--- 基础 capabilities
-local capabilities = vim.lsp.protocol.make_client_capabilities()
--- 用nvim-cmp，使用它提供的 helper 来补全 capabilities
-capabilities = require("cmp_nvim_lsp").default_capabilities(capabilities)
-
-vim.lsp.config('lua_ls', {
-  capabilities = capabilities,
-  cmd = { 'lua-language-server' },
-  filetypes = { 'lua' },
-  root_markers = { '.project', '.git', '.luarc.json', '.luarc.jsonc' },
-  settings = {
-    Lua = {
-		runtime = {
-			version = 'LuaJIT',
-			path = vim.split(package.path, ';'),
-		},
-		workspace = {
-			-- preloadFileSize 单位为 KB（例如 2000 = 2MB）
-			preloadFileSize = 1000,
-			-- 可选：预加载最大文件数
-			maxPreload = 2000,
-			-- 把 Neovim runtimepath 加进 library，以便识别内置全局/模块
-			library = vim.api.nvim_get_runtime_file("", true),
-			-- 禁用第三方库检查
-			checkThirdParty = false,
-		},
-		diagnostics = {
-			globals = {"vim"},
-		},
-		telemetry = { enable = false },
-    }
-  }
-})
-
-vim.lsp.enable('lua_ls')
---]]
---------------------------lspconfig end----------------------------
+--------------------------copilot end----------------------------
 
 --------------------------options begin----------------------------
 vim.opt.number = true
@@ -420,7 +389,6 @@ vim.opt.backup = false
 vim.opt.writebackup = true
 vim.opt.swapfile = false
 vim.opt.undofile = false
-vim.opt.autoread = true
 
 vim.opt.backspace = "indent,eol,start"
 
@@ -432,11 +400,11 @@ vim.cmd("colorscheme tokyonight")
 vim.opt.termguicolors = true
 vim.o.background = "dark"
 vim.o.guifont = "Consolas:h12"
+vim.opt.title = true
 
-
+--[[
 vim.opt.autoread = true
-vim.opt.updatetime = 1000
-
+vim.opt.updatetime = 2000
 vim.api.nvim_create_autocmd({ "FocusGained", "BufEnter", "CursorHold", "CursorHoldI" },
 {
 	pattern = "*",
@@ -444,7 +412,6 @@ vim.api.nvim_create_autocmd({ "FocusGained", "BufEnter", "CursorHold", "CursorHo
 		vim.cmd("checktime")
 	end,
 })
-
 vim.api.nvim_create_autocmd("FileChangedShellPost",
 {
 	pattern = "*",
@@ -452,32 +419,14 @@ vim.api.nvim_create_autocmd("FileChangedShellPost",
 		vim.notify("File changed on disk and reloaded", vim.log.levels.WARN)
 	end,
 })
-
-
-vim.opt.title = true
-
-local function set_term_title()
-	local name = vim.fn.expand("%:p")    -- 完整路径, 用 "%:t" 获取文件名
-	if name == "" then name = "[No Name]" end
-	if vim.bo.modified then name = name .. " [+]" end
-	vim.opt.titlestring = name
-end
-
-vim.api.nvim_create_autocmd({ "FocusGained", "BufEnter", "BufWritePost", "BufModifiedSet", "FileChangedShellPost" },
-{
-	pattern = "*",
-	callback = set_term_title
-})
--- 进程刚启动时也设置一次
-set_term_title()
-
---[[
-vim.api.nvim_create_autocmd('BufWritePost', {
-  pattern = 'init.lua',
-  command = 'source <afile>',
-  group = vim.api.nvim_create_augroup('ReloadNvimConfig', { clear = true })
-})
 --]]
+
+if vim.g.neovide then
+	vim.g.neovide_cursor_animation_length = 0
+	vim.g.neovide_cursor_trail_size = 0.0
+	vim.g.neovide_cursor_vfx_mode = ""
+	vim.g.neovide_cursor_vfx_opacity = 0.0
+end
 --------------------------options end----------------------------
 
 --------------------------keymaps begin----------------------------
@@ -507,82 +456,6 @@ vim.keymap.set('i', '<A-h>', '<Left>', {silent = true, noremap = true})
 vim.keymap.set('i', '<A-l>', '<Right>', {silent = true, noremap = true})
 
 vim.keymap.set('n', '<C-t>', ':tabnew<CR>', {silent = true, noremap = true})
-
-vim.keymap.set('n', '<C-n>', ':NvimTreeToggle<CR>', {silent = true, noremap = true})
-vim.keymap.set('n', '<A-f>', ':NvimTreeFindFile<CR>', {silent = true, noremap = true})
-
-local builtin = require('telescope.builtin')
-vim.keymap.set('n', '<leader>ff', builtin.find_files, { desc = 'Telescope find files' })
-vim.keymap.set('n', '<leader>fg', builtin.live_grep, { desc = 'Telescope live grep' })
-vim.keymap.set('n', '<leader>fw', builtin.grep_string, { desc = 'Telescope grep string' })
-vim.keymap.set('n', '<leader>fb', builtin.buffers, { desc = 'Telescope buffers' })
-vim.keymap.set('n', '<leader>ft', builtin.help_tags, { desc = 'Telescope help tags' })
-vim.keymap.set('n', '<leader>fh', builtin.search_history, { desc = 'Telescope search history' })
-vim.keymap.set('n', '<leader>fk', builtin.keymaps, { desc = 'Telescope keymaps' })
-vim.keymap.set({'n', 'v'}, '<leader>fr', builtin.resume, { desc = 'Resume last telescope' })
-
-vim.keymap.set('n', '<C-p>', builtin.find_files, { desc = 'Telescope find files' })
-vim.keymap.set('n', '<C-b>', builtin.buffers, { desc = 'Telescope buffers' })
-vim.keymap.set('n', '<C-g>', builtin.resume, { desc = 'Resume last telescope' })
-
-vim.keymap.set('n', '<C-f>', function()
-	local input_str = vim.fn.input('Telescope grep: ')
-	if input_str ~= '' then
-		builtin.grep_string({ search = input_str })
-	end
-end, { desc = 'Telescope grep input string' })
-vim.keymap.set('n', '<S-f>', builtin.grep_string, { desc = 'Telescope grep string' })
-vim.keymap.set('v', '<S-f>', function()
-	vim.cmd('normal! "zy')
-	builtin.grep_string({ search = vim.fn.getreg('z') })
-end, { desc = 'Telescope grep string' })
-
-vim.keymap.set('n', '<C-S-f>', builtin.live_grep, { desc = 'Telescope live grep' })
-vim.keymap.set('v', '<C-S-f>', function()
-	vim.cmd('normal! "zy')
-	builtin.live_grep({ default_text = vim.fn.getreg('z') })
-end, {desc = "Telescope live grep" })
-
--- 在 LSP 客户端附加到缓冲区时设置快捷键
---[[
-vim.api.nvim_create_autocmd('LspAttach', {
-	group = vim.api.nvim_create_augroup('UserLspConfig', {}),
-	callback = function(ev)
-		local bufmap = function(mode, lhs, rhs, desc)
-			if desc then desc = "LSP: " .. desc end
-			vim.keymap.set(mode, lhs, rhs, { buffer = ev.buf, desc = desc })
-		end
-		-- 跳转到定义 (gd)
-		bufmap('n', 'gd', builtin.lsp_definitions, "Goto definition")
-		--bufmap("n", "gd", vim.lsp.buf.definition, "Goto definition")
-		--bufmap("n", "gD", vim.lsp.buf.declaration, "Goto declaration")
-		-- 实现 (gi)
-		bufmap('n', 'gi', builtin.lsp_implementations, "Implementation")
-		--bufmap("n", "gi", vim.lsp.buf.implementation, "Implementation")
-		-- 类型定义 (gf)
-		bufmap('n', 'gf', builtin.lsp_type_definitions, "Type definition")
-		--bufmap('n', 'gf', vim.lsp.buf.type_definition, "Type definition")
-
-		-- 查找引用 (gr)
-		bufmap('n', 'gr', builtin.lsp_references, "References")
-		--bufmap("n", "gr", vim.lsp.buf.references, "References")
-		-- 列出文档中的符号 (gs)
-		bufmap('n', 'gs', builtin.lsp_document_symbols, "Document Symbols")
-		-- 列出工作区中的符号 (gS)
-		bufmap('n', 'gS', builtin.lsp_dynamic_workspace_symbols, "Workspace Symbols")
-
-		bufmap("n", "K", vim.lsp.buf.hover, "Hover docs")
-		bufmap("n", "<leader>rn", vim.lsp.buf.rename, "Rename")
-		bufmap("n", "<leader>ca", vim.lsp.buf.code_action, "Code action")
-		--bufmap("n", "<leader>f", function() vim.lsp.buf.format({ async = true }) end, "Format")
-	end,
-})
---]]
-
-
-vim.keymap.set('i', '<C-j>', 'copilot#Accept("\\<CR>")', { expr = true, replace_keycodes = false })
-vim.g.copilot_no_tab_map = true
-vim.keymap.set('i', '<C-k>', '<Plug>(copilot-accept-word)')
 
 vim.keymap.set('n', '<A-e>', function()
     vim.cmd("silent :!start explorer %:p:h")
