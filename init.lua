@@ -76,8 +76,7 @@ require("lazy").setup({
 		{
 			"folke/which-key.nvim",
 			event = "VeryLazy",
-			opts = {
-			},
+			opts = {},
 			keys = {
 				{
 				  "<leader>?",
@@ -125,12 +124,11 @@ require("lazy").setup({
 						input = {
 							keys = {
 								['<c-v>'] = { '<c-r>+', mode = 'i', expr = true, desc = "paste" },
-								['<c-v>'] = { '"+P', mode = 'n', expr = true, desc = "paste" },
 							},
 						},
 					},
 				},
-				notifier = { enabled = true, timeout = 8000},
+				notifier = { enabled = true, timeout = 10000},
 				quickfile = { enabled = true },
 				scope = { enabled = true },
 			},
@@ -210,6 +208,22 @@ require("lazy").setup({
 			},
 		},
 		{
+			"folke/persistence.nvim",
+			event = "BufReadPre", -- this will only start session saving when an actual file was opened
+			opts = {},
+			keys = {
+				-- load the session for the current directory
+				{"<leader>qs", mode = "n", function() require("persistence").load() end, desc = "load session for current dir" },
+				-- select a session to load
+				{"<leader>qS", mode = "n", function() require("persistence").select() end, desc = "select session to load" },
+				-- load the last session
+				{"<leader>ql", mode = "n", function() require("persistence").load({ last = true }) end, desc = "load last session" },
+				-- stop Persistence => session won't be saved on exit
+				{"<leader>qd", mode = "n", function() require("persistence").stop() end, desc = "stop persistence" },
+			}
+		},
+		--[[
+		{
 		  'saghen/blink.cmp',
 		  dependencies = { 'rafamadriz/friendly-snippets' },
 		  version = 'v1.9.1',
@@ -226,17 +240,72 @@ require("lazy").setup({
 			keymap = { preset = 'super-tab' },
 			appearance = { nerd_font_variant = 'mono' },
 			completion = { documentation = { auto_show = false } },
-			sources = { default = { 'lsp', 'path', 'snippets', 'buffer' }, },
+			sources = {
+				default = { 'lsp', 'buffer' },
+			},
 			fuzzy = { implementation = "lua" }
 		  },
 		  opts_extend = { "sources.default" }
 		},
+		--]]
 		{
-			"github/copilot.vim"
+			"hrsh7th/nvim-cmp",
+			dependencies = {
+				"hrsh7th/cmp-nvim-lsp",
+				"hrsh7th/cmp-buffer",
+				"hrsh7th/cmp-path",
+				"hrsh7th/cmp-cmdline",
+				"hrsh7th/cmp-vsnip",
+				"hrsh7th/vim-vsnip",
+			},
+			config = function()
+				local cmp = require("cmp")
+				cmp.setup({
+					snippet = {
+						expand = function(args)
+							vim.fn["vsnip#anonymous"](args.body)
+						end,
+					},
+					window = {
+						completion = cmp.config.window.bordered(),
+						documentation = cmp.config.window.bordered(),
+					},
+					mapping = cmp.mapping.preset.insert({
+						['<C-b>'] = cmp.mapping.scroll_docs(-4),
+						['<C-f>'] = cmp.mapping.scroll_docs(4),
+						["<C-n>"] = cmp.mapping.select_next_item({ behavior = cmp.SelectBehavior.Insert }),
+						["<C-p>"] = cmp.mapping.select_prev_item({ behavior = cmp.SelectBehavior.Insert }),
+						['<C-Space>'] = cmp.mapping.complete(),
+						['<C-e>'] = cmp.mapping.abort(),
+						['<CR>'] = cmp.mapping.confirm({ select = true }),
+					}),
+					sources = cmp.config.sources({
+						{ name = 'nvim_lsp' },
+						{ name = 'vsnip' },
+					},
+					{
+						{ name = 'buffer' },
+						{ name = 'path' },
+					}),
+				})
+			end,
+		},
+		{
+			"github/copilot.vim",
+			config = function()
+				vim.keymap.set('i', '<C-j>', 'copilot#Accept("\\<CR>")', { expr = true, replace_keycodes = false })
+				vim.keymap.set('i', '<C-k>', '<Plug>(copilot-accept-word)')
+				vim.keymap.set('i', '<C-l>', '<Plug>(copilot-accept-line)')
+				vim.keymap.set('i', '<C-h>', '<Plug>(copilot-dismiss)')
+				vim.keymap.set('i', '<A-n>', '<Plug>(copilot-next)')
+				vim.keymap.set('i', '<A-p>', '<Plug>(copilot-previous)')
+				vim.g.copilot_no_tab_map = true
+				vim.g.copilot_workspace_folders = {"H:/L10/server/game", "H:/L10/Development/QnMobile/Assets/Scripts/lua"}
+			end,
 		},
 		{
 			"CopilotC-Nvim/CopilotChat.nvim",
-			dependencies = { 
+			dependencies = {
 				"github/copilot.vim",
 				"nvim-lua/plenary.nvim"
 			},
@@ -257,12 +326,40 @@ require("lazy").setup({
 				{ "<leader>ct", mode = "v", "<cmd>CopilotChatTests<cr>",   desc = "CopilotChat: Tests for selection" },
 			},
 		},
+		--[[
+		{
+			"ludovicchabant/vim-gutentags",
+			config = function()
+				local cache_dir = vim.fn.stdpath('cache')
+				vim.fn.mkdir(cache_dir .. '/tags', 'p')
+
+				--vim.g.gutentags_enabled = 0
+				vim.g.gutentags_cache_dir = cache_dir .. '/tags'
+				vim.g.gutentags_modules = {'ctags'}
+				vim.g.gutentags_ctags_executable = 'ctags'
+				vim.g.gutentags_ctags_extra_args = {'--languages=Lua', '--fields=+niazSk', '--extras=+q', '--lua-kinds=+mvfgtc', '--sort=no'}
+				vim.g.gutentags_file_list_command = 'rg --files --hidden --glob "!.git" --glob "!.svn" --glob "!node_modules" --glob "*.lua"'
+				vim.g.gutentags_project_root = {'.project'}
+
+				--vim.g.gutentags_generate_on_new	         = 0
+				--vim.g.gutentags_generate_on_write        = 0
+				--vim.g.gutentags_generate_on_missing      = 0
+				--vim.g.gutentags_generate_on_empty_buffer = 0
+
+				vim.keymap.set('n', '<leader>tu', function()
+					--vim.g.gutentags_enabled = 1
+					vim.cmd('GutentagsUpdate')
+					--vim.g.gutentags_enabled = 0
+					vim.notify('Tags update manually', vim.log.levels.INFO)
+				end, { desc = 'Gutentags Update' })
+			end,
+		},
+		--]]
 		{
 			"neovim/nvim-lspconfig",
 			dependencies = {
 				{ "mason-org/mason.nvim", opts = {} },
 				"WhoIsSethDaniel/mason-tool-installer.nvim",
-				"saghen/blink.cmp",
 			},
 			config = function()
 				-- 1. 初始化 mason（确保语言服务器已安装）
@@ -280,9 +377,9 @@ require("lazy").setup({
 				})
 				require("mason-tool-installer").setup { ensure_installed = ensure_installed }
 
-				local capabilities = require("blink.cmp").get_lsp_capabilities()
+				--local capabilities = require("cmp_nvim_lsp").default_capabilities()
 				for name, server in pairs(servers) do
-					server.capabilities = vim.tbl_deep_extend("force", {}, capabilities, server.capabilities or {})
+					--server.capabilities = vim.tbl_deep_extend("force", {}, capabilities, server.capabilities or {})
 					vim.lsp.config(name, server)
 					vim.lsp.enable(name)
 				end
@@ -297,17 +394,17 @@ require("lazy").setup({
 							workspace = {
 								library = vim.api.nvim_get_runtime_file("", true),
 								checkThirdParty = false,
+								preloadFileSize = 1500, -- 文件大小阈值
+								maxPreload = 500, -- 预加载文件数量
+								ignoreDir = { "node_modules", "engine", "implib" },
 							},
-							--format = { enable = true }, -- 启用格式化
+							telemetry = { enable = false },
 						},
 					},
 				})
 				vim.lsp.enable("lua_ls")
 			end,
 		},
-		--[[
-		{ "neoclide/coc.nvim", branch = 'release', },
-		--]]
 	},
 	install = {},
 	checker = {
@@ -317,16 +414,71 @@ require("lazy").setup({
 })
 --------------------------lazy.nvim end----------------------------
 
---------------------------copilot begin----------------------------
-vim.keymap.set('i', '<C-j>', 'copilot#Accept("\\<CR>")', { expr = true, replace_keycodes = false })
-vim.keymap.set('i', '<C-k>', '<Plug>(copilot-accept-word)')
-vim.keymap.set('i', '<C-l>', '<Plug>(copilot-accept-line)')
-vim.keymap.set('i', '<C-h>', '<Plug>(copilot-dismiss)')
-vim.keymap.set('i', '<A-n>', '<Plug>(copilot-next)')
-vim.keymap.set('i', '<A-p>', '<Plug>(copilot-previous)')
-vim.g.copilot_no_tab_map = true
-vim.g.copilot_workspace_folders = {"H:/L10/server/game", "H:/L10/Development/QnMobile/Assets/Scripts/lua"}
---------------------------copilot end----------------------------
+--------------------------ctags begin----------------------------
+vim.api.nvim_create_user_command("GenerateTags", function()
+	local root_dir = vim.fn.getcwd()
+	local tags_dir = vim.fn.stdpath("cache") .. "/ctags"
+	local project_name = vim.fn.fnamemodify(root_dir, ":t")
+	local tags_path = vim.fn.expand(tags_dir .. "/" .. project_name .. ".tags")
+	if not vim.loop.fs_stat(tags_dir) then
+		vim.fn.mkdir(tags_dir, "p") -- "p" 表示递归创建父目录
+	end
+
+	vim.notify("Tags generating: " .. root_dir, vim.log.levels.INFO)
+
+	local stdout = vim.loop.new_pipe(false)
+	local stderr = vim.loop.new_pipe(false)
+
+	vim.loop.spawn("ctags", {
+		args = { "-R", "--fields=+niazSkS", "--extras=+q", "--lua-kinds=+f", "--exclude=.svn", "--exclude=node_modules", "-f", tags_path, root_dir },
+		stdio = { nil, stdout, stderr },
+		cwd = root_dir,
+	}, function(code, signal)
+		stdout:close()
+		stderr:close()
+		vim.schedule(function()
+			if code == 0 then
+				if not vim.o.tags:find(tags_path, 1, true) then
+					vim.o.tags = tags_path .. "," .. vim.o.tags
+				end
+				vim.notify("Tags generated successfully: " .. tags_path, vim.log.levels.INFO)
+			else
+				vim.notify("Failed to generate tags", vim.log.levels.WARN)
+			end
+		end)
+	end)
+
+	vim.loop.read_start(stderr, function(err, data)
+		vim.schedule(function()
+			if err then
+				vim.api.nvim_echo({{"Ctags error: " .. err, "WarningMsg"}}, false, {})
+			elseif data then
+				vim.api.nvim_echo({{"Ctags error data: " .. data, "WarningMsg"}}, false, {})
+			end
+		end)
+	end)
+end, { desc = "Manually generate Ctags" })
+
+vim.api.nvim_create_user_command("AddTags", function()
+	local root_dir = vim.fs.dirname(vim.fn.getcwd())
+	local tags_dir = vim.fn.stdpath("cache") .. "/ctags"
+	local project_name = vim.fn.fnamemodify(root_dir, ":t")
+	local tags_path = vim.fn.expand(tags_dir .. "/" .. project_name .. ".tags")
+	if vim.loop.fs_stat(tags_path) then
+		if vim.o.tags:find(tags_path, 1, true) then
+			vim.notify("Tags already added: " .. tags_path, vim.log.levels.INFO)
+		else
+			vim.o.tags = tags_path .. "," .. vim.o.tags
+			vim.notify("Tags added successfully: " .. tags_path, vim.log.levels.INFO)
+		end
+	else
+		vim.notify("Tags file not found: " .. tags_path, vim.log.levels.WARN)
+	end
+end, { desc = "Manually add Ctags" })
+
+vim.keymap.set("n", "<leader>tg", ":GenerateTags<CR>", { noremap = true, silent = true, desc = "Manually generate tags" })
+vim.keymap.set("n", "<leader>ta", ":AddTags<CR>", { noremap = true, silent = true, desc = "Manually add tags" })
+--------------------------ctags end----------------------------
 
 --------------------------options begin----------------------------
 vim.opt.number = true
@@ -374,23 +526,7 @@ vim.o.guifont = "JetBrainsMono Nerd Font Mono:h11"
 --vim.o.guifont = "Consolas:h12"
 vim.opt.title = true
 
---[[
 vim.opt.autoread = true
-vim.api.nvim_create_autocmd({ "FocusGained", "BufEnter", "CursorHold", "CursorHoldI" },
-{
-	pattern = "*",
-	callback = function()
-		vim.cmd("checktime")
-	end,
-})
-vim.api.nvim_create_autocmd("FileChangedShellPost",
-{
-	pattern = "*",
-	callback = function()
-		vim.notify("File changed on disk and reloaded", vim.log.levels.WARN)
-	end,
-})
---]]
 
 if vim.g.neovide then
 	vim.g.neovide_cursor_animation_length = 0
@@ -420,17 +556,17 @@ vim.keymap.set('i', '<c-v>', function()
 end, {silent = true, noremap = true, desc = "paste with auto paste mode"})
 vim.keymap.set('n', '<c-a>', 'ggVG', {silent = true, noremap = true})
 
-vim.keymap.set({'n', 'v'}, '<c-j>', ':resize +5<cr>', {silent = true, noremap = true})
-vim.keymap.set({'n', 'v'}, '<c-k>', ':resize -5<cr>', {silent = true, noremap = true})
-vim.keymap.set({'n', 'v'}, '<c-h>', ':vertical resize -10<cr>', {silent = true, noremap = true})
-vim.keymap.set({'n', 'v'}, '<c-l>', ':vertical resize +10<cr>', {silent = true, noremap = true})
+vim.keymap.set({'n', 'v'}, '<c-j>', ':resize +5<cr>', {silent = true, noremap = true, desc = "Resize window"})
+vim.keymap.set({'n', 'v'}, '<c-k>', ':resize -5<cr>', {silent = true, noremap = true, desc = "Resize window"})
+vim.keymap.set({'n', 'v'}, '<c-h>', ':vertical resize -10<cr>', {silent = true, noremap = true, desc = "Resize window"})
+vim.keymap.set({'n', 'v'}, '<c-l>', ':vertical resize +10<cr>', {silent = true, noremap = true, desc = "Resize window"})
 
-vim.keymap.set('i', '<a-j>', '<Down>', {silent = true, noremap = true})
-vim.keymap.set('i', '<a-k>', '<Up>', {silent = true, noremap = true})
-vim.keymap.set('i', '<a-h>', '<Left>', {silent = true, noremap = true})
-vim.keymap.set('i', '<a-l>', '<Right>', {silent = true, noremap = true})
+vim.keymap.set('i', '<a-j>', '<Down>', {silent = true, noremap = true, desc = "Move cursor"})
+vim.keymap.set('i', '<a-k>', '<Up>', {silent = true, noremap = true, desc = "Move cursor"})
+vim.keymap.set('i', '<a-h>', '<Left>', {silent = true, noremap = true, desc = "Move cursor"})
+vim.keymap.set('i', '<a-l>', '<Right>', {silent = true, noremap = true, desc = "Move cursor"})
 
-vim.keymap.set('n', '<c-t>', ':tabnew<cr>', {silent = true, noremap = true})
+vim.keymap.set('n', '<c-t>', ':tabnew<cr>', {silent = true, noremap = true, desc = "New Tab"})
 
 vim.keymap.set('n', '<a-e>', function()
 	local dir = vim.fn.fnameescape(vim.fn.expand("%:p:h"))
