@@ -222,32 +222,73 @@ require("lazy").setup({
 				{"<leader>qd", mode = "n", function() require("persistence").stop() end, desc = "stop persistence" },
 			}
 		},
+		{
+			"zbirenbaum/copilot.lua",
+			cmd = "Copilot",
+			event = "InsertEnter",
+			config = function()
+				require("copilot").setup({
+					suggestion = { enabled = false },
+					panel = { enabled = false },
+				})
+			end,
+		},
+		{
+			"saghen/blink.cmp",
+			version = "v1.9.1",
+			dependencies = {
+				'rafamadriz/friendly-snippets',
+				"fang2hou/blink-copilot",
+			},
+			opts = {
+				-- 'default' (recommended) for mappings similar to built-in completions (C-y to accept)
+				-- 'super-tab' for mappings similar to vscode (tab to accept)
+				-- 'enter' for enter to accept
+				-- 'none' for no mappings
+				-- All presets have the following mappings:
+				-- C-space: Open menu or open docs if already open
+				-- C-n/C-p or Up/Down: Select next/previous item
+				-- C-e: Hide menu
+				-- C-k: Toggle signature help (if signature.enabled = true)
+				-- See :h blink-cmp-config-keymap for defining your own keymap
+				keymap = { preset = 'super-tab' },
+				appearance = { nerd_font_variant = 'mono' },
+				completion = {
+					documentation = { auto_show = false },
+					ghost_text = { enabled = true },
+					preselect = true,
+					auto_insert = true,
+				},
+				sources = {
+					default = { 'copilot', 'lsp', 'path', 'snippets', 'buffer' },
+					providers = {
+						copilot = {
+							name = "copilot",
+							module = "blink-copilot",
+							score_offset = 10,
+							async = true,
+							fallbacks = {},
+						},
+						lsp = {
+							fallbacks = {},
+						},
+						buffer = {
+							score_offset = -10,
+						},
+					},
+				},
+				fuzzy = { implementation = "prefer_rust" },
+			},
+			opts_extend = { "sources.default" },
+		},
 		--[[
 		{
-		  'saghen/blink.cmp',
-		  dependencies = { 'rafamadriz/friendly-snippets' },
-		  version = 'v1.9.1',
-		  opts = {
-			-- 'default' (recommended) for mappings similar to built-in completions (C-y to accept)
-			-- 'super-tab' for mappings similar to vscode (tab to accept)
-			-- 'enter' for enter to accept
-			-- All presets have the following mappings:
-			-- C-space: Open menu or open docs if already open
-			-- C-n/C-p or Up/Down: Select next/previous item
-			-- C-e: Hide menu
-			-- C-k: Toggle signature help (if signature.enabled = true)
-			-- See :h blink-cmp-config-keymap for defining your own keymap
-			keymap = { preset = 'super-tab' },
-			appearance = { nerd_font_variant = 'mono' },
-			completion = { documentation = { auto_show = false } },
-			sources = {
-				default = { 'lsp', 'buffer' },
-			},
-			fuzzy = { implementation = "lua" }
-		  },
-		  opts_extend = { "sources.default" }
+			"zbirenbaum/copilot-cmp",
+			dependencies = { "zbirenbaum/copilot.lua" },
+			config = function ()
+				require("copilot_cmp").setup()
+			end
 		},
-		--]]
 		{
 			"hrsh7th/nvim-cmp",
 			dependencies = {
@@ -266,30 +307,103 @@ require("lazy").setup({
 							vim.fn["vsnip#anonymous"](args.body)
 						end,
 					},
-					window = {
-						completion = cmp.config.window.bordered(),
-						documentation = cmp.config.window.bordered(),
-					},
 					mapping = cmp.mapping.preset.insert({
 						['<C-b>'] = cmp.mapping.scroll_docs(-4),
 						['<C-f>'] = cmp.mapping.scroll_docs(4),
 						["<C-n>"] = cmp.mapping.select_next_item({ behavior = cmp.SelectBehavior.Insert }),
+						['<Tab>'] = cmp.mapping.select_next_item({ behavior = cmp.SelectBehavior.Insert }),
 						["<C-p>"] = cmp.mapping.select_prev_item({ behavior = cmp.SelectBehavior.Insert }),
+						['<S-Tab>'] = cmp.mapping.select_prev_item({ behavior = cmp.SelectBehavior.Insert }),
 						['<C-Space>'] = cmp.mapping.complete(),
 						['<C-e>'] = cmp.mapping.abort(),
 						['<CR>'] = cmp.mapping.confirm({ select = true }),
+						['<C-j>'] = cmp.mapping.confirm({ select = true }),
 					}),
 					sources = cmp.config.sources({
-						{ name = 'nvim_lsp' },
-						{ name = 'vsnip' },
-					},
-					{
-						{ name = 'buffer' },
-						{ name = 'path' },
+						{ name = 'copilot', priority = 1000, max_item_count = 5 },
+						{ name = 'nvim_lsp', priority = 900, max_item_count = 8 },
+						{ name = 'vsnip', priority = 500, max_item_count = 5 },
+						{ name = 'buffer', priority = 300, max_item_count = 8 },
+						{ name = 'path', priority = 200, max_item_count = 5 },
 					}),
+					sorting = {
+						priority_weight = 2,
+						comparators = {
+							require("copilot_cmp.comparators").prioritize,
+							-- Below is the default comparitor list and order for nvim-cmp
+							cmp.config.compare.offset,
+							-- cmp.config.compare.scopes, --this is commented in nvim-cmp too
+							cmp.config.compare.exact,
+							cmp.config.compare.score,
+							cmp.config.compare.recently_used,
+							cmp.config.compare.locality,
+							cmp.config.compare.kind,
+							cmp.config.compare.sort_text,
+							cmp.config.compare.length,
+							cmp.config.compare.order,
+						},
+					},
+					completion = {
+						completeopt = "menu,menuone,noinsert",
+					},
+					experimental = {
+						ghost_text = true,
+					},
 				})
 			end,
 		},
+		--]]
+		{
+			"neovim/nvim-lspconfig",
+			dependencies = {
+				{ "mason-org/mason.nvim", opts = {} },
+				"WhoIsSethDaniel/mason-tool-installer.nvim",
+			},
+			config = function()
+				-- 1. 初始化 mason（确保语言服务器已安装）
+				require("mason").setup()
+
+				-- 2. 通用诊断配置（行内提示）
+				vim.diagnostic.config({ virtual_text = true })
+
+				-- 3. 定义各语言服务器的配置
+				local servers = { pyright = {}, clangd = {} }
+				local ensure_installed = vim.tbl_keys(servers)
+				vim.list_extend(ensure_installed, {
+					"lua-language-server",
+					"stylua"
+				})
+				require("mason-tool-installer").setup { ensure_installed = ensure_installed }
+
+				local capabilities = require("blink.cmp").get_lsp_capabilities()
+				for name, server in pairs(servers) do
+					server.capabilities = vim.tbl_deep_extend("force", {}, capabilities, server.capabilities or {})
+					vim.lsp.config(name, server)
+					vim.lsp.enable(name)
+				end
+
+				vim.lsp.config("lua_ls", {
+					filetypes = { "lua" },
+					root_markers = { ".project", ".luarc.json", ".luarc.jsonc" },
+					settings = {
+						Lua = {
+							runtime = { version = "LuaJIT", path = vim.split(package.path, ";") }, -- Lua 运行时
+							diagnostics = { globals = { "vim" } }, -- 忽略全局变量 vim 的警告
+							workspace = {
+								library = vim.api.nvim_get_runtime_file("", true),
+								checkThirdParty = false,
+								preloadFileSize = 1500, -- 文件大小阈值
+								maxPreload = 500, -- 预加载文件数量
+								ignoreDir = { "node_modules", "engine", "implib" },
+							},
+							telemetry = { enable = false },
+						},
+					},
+				})
+				vim.lsp.enable("lua_ls")
+			end,
+		},
+		--[[
 		{
 			"github/copilot.vim",
 			config = function()
@@ -326,85 +440,7 @@ require("lazy").setup({
 				{ "<leader>ct", mode = "v", "<cmd>CopilotChatTests<cr>",   desc = "CopilotChat: Tests for selection" },
 			},
 		},
-		--[[
-		{
-			"ludovicchabant/vim-gutentags",
-			config = function()
-				local cache_dir = vim.fn.stdpath('cache')
-				vim.fn.mkdir(cache_dir .. '/tags', 'p')
-
-				--vim.g.gutentags_enabled = 0
-				vim.g.gutentags_cache_dir = cache_dir .. '/tags'
-				vim.g.gutentags_modules = {'ctags'}
-				vim.g.gutentags_ctags_executable = 'ctags'
-				vim.g.gutentags_ctags_extra_args = {'--languages=Lua', '--fields=+niazSk', '--extras=+q', '--lua-kinds=+mvfgtc', '--sort=no'}
-				vim.g.gutentags_file_list_command = 'rg --files --hidden --glob "!.git" --glob "!.svn" --glob "!node_modules" --glob "*.lua"'
-				vim.g.gutentags_project_root = {'.project'}
-
-				--vim.g.gutentags_generate_on_new	         = 0
-				--vim.g.gutentags_generate_on_write        = 0
-				--vim.g.gutentags_generate_on_missing      = 0
-				--vim.g.gutentags_generate_on_empty_buffer = 0
-
-				vim.keymap.set('n', '<leader>tu', function()
-					--vim.g.gutentags_enabled = 1
-					vim.cmd('GutentagsUpdate')
-					--vim.g.gutentags_enabled = 0
-					vim.notify('Tags update manually', vim.log.levels.INFO)
-				end, { desc = 'Gutentags Update' })
-			end,
-		},
 		--]]
-		{
-			"neovim/nvim-lspconfig",
-			dependencies = {
-				{ "mason-org/mason.nvim", opts = {} },
-				"WhoIsSethDaniel/mason-tool-installer.nvim",
-			},
-			config = function()
-				-- 1. 初始化 mason（确保语言服务器已安装）
-				require("mason").setup()
-
-				-- 2. 通用诊断配置（行内提示）
-				vim.diagnostic.config({ virtual_text = true })
-
-				-- 3. 定义各语言服务器的配置
-				local servers = { pyright = {}, clangd = {} }
-				local ensure_installed = vim.tbl_keys(servers)
-				vim.list_extend(ensure_installed, {
-					"lua-language-server",
-					"stylua"
-				})
-				require("mason-tool-installer").setup { ensure_installed = ensure_installed }
-
-				--local capabilities = require("cmp_nvim_lsp").default_capabilities()
-				for name, server in pairs(servers) do
-					--server.capabilities = vim.tbl_deep_extend("force", {}, capabilities, server.capabilities or {})
-					vim.lsp.config(name, server)
-					vim.lsp.enable(name)
-				end
-
-				vim.lsp.config("lua_ls", {
-					filetypes = { "lua" },
-					root_markers = { ".project", ".luarc.json", ".luarc.jsonc" },
-					settings = {
-						Lua = {
-							runtime = { version = "LuaJIT", path = vim.split(package.path, ";") }, -- Lua 运行时
-							diagnostics = { globals = { "vim" } }, -- 忽略全局变量 vim 的警告
-							workspace = {
-								library = vim.api.nvim_get_runtime_file("", true),
-								checkThirdParty = false,
-								preloadFileSize = 1500, -- 文件大小阈值
-								maxPreload = 500, -- 预加载文件数量
-								ignoreDir = { "node_modules", "engine", "implib" },
-							},
-							telemetry = { enable = false },
-						},
-					},
-				})
-				vim.lsp.enable("lua_ls")
-			end,
-		},
 	},
 	install = {},
 	checker = {
@@ -430,7 +466,7 @@ vim.api.nvim_create_user_command("GenerateTags", function()
 	local stderr = vim.loop.new_pipe(false)
 
 	vim.loop.spawn("ctags", {
-		args = { "-R", "--fields=+niazSkS", "--extras=+q", "--lua-kinds=+f", "--exclude=.svn", "--exclude=node_modules", "-f", tags_path, root_dir },
+		args = { "-R", "--fields=+niazSk", "--extras=+q", "--lua-kinds=+f", "--exclude=.svn", "--exclude=node_modules", "-f", tags_path, root_dir },
 		stdio = { nil, stdout, stderr },
 		cwd = root_dir,
 	}, function(code, signal)
@@ -492,6 +528,7 @@ vim.opt.smartcase = true
 vim.opt.hlsearch = true
 vim.opt.incsearch = true
 vim.opt.inccommand = "split"
+--vim.opt.wrap = false
 
 vim.opt.autoindent = true
 vim.opt.tabstop = 4
@@ -522,7 +559,8 @@ vim.opt.linespace = 1
 vim.cmd.colorscheme("gruvbox-material")
 vim.opt.termguicolors = true
 vim.o.background = "dark"
-vim.o.guifont = "JetBrainsMono Nerd Font Mono:h11"
+vim.o.guifont = "FiraCode Nerd Font Mono:h11"
+--vim.o.guifont = "JetBrainsMono Nerd Font Mono:h11"
 --vim.o.guifont = "Consolas:h12"
 vim.opt.title = true
 
