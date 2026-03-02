@@ -223,14 +223,16 @@ require("lazy").setup({
 			}
 		},
 		{
-			"zbirenbaum/copilot.lua",
-			cmd = "Copilot",
-			event = "InsertEnter",
+			"github/copilot.vim",
 			config = function()
-				require("copilot").setup({
-					suggestion = { enabled = false },
-					panel = { enabled = false },
-				})
+				vim.keymap.set('i', '<C-j>', 'copilot#Accept("\\<CR>")', { expr = true, replace_keycodes = false })
+				vim.keymap.set('i', '<C-k>', '<Plug>(copilot-accept-word)')
+				vim.keymap.set('i', '<C-l>', '<Plug>(copilot-accept-line)')
+				vim.keymap.set('i', '<C-h>', '<Plug>(copilot-dismiss)')
+				vim.keymap.set('i', '<A-n>', '<Plug>(copilot-next)')
+				vim.keymap.set('i', '<A-p>', '<Plug>(copilot-previous)')
+				vim.g.copilot_no_tab_map = true
+				vim.g.copilot_workspace_folders = {"H:/L10/server/game", "H:/L10/Development/QnMobile/Assets/Scripts/lua"}
 			end,
 		},
 		{
@@ -238,7 +240,6 @@ require("lazy").setup({
 			version = "v1.9.1",
 			dependencies = {
 				'rafamadriz/friendly-snippets',
-				"fang2hou/blink-copilot",
 			},
 			opts = {
 				-- 'default' (recommended) for mappings similar to built-in completions (C-y to accept)
@@ -251,29 +252,26 @@ require("lazy").setup({
 				-- C-e: Hide menu
 				-- C-k: Toggle signature help (if signature.enabled = true)
 				-- See :h blink-cmp-config-keymap for defining your own keymap
-				keymap = { preset = 'super-tab' },
+				keymap = {
+					preset = 'default',
+					["<CR>"] = {"accept", "fallback"},
+					["<Tab>"] = { "select_next", "snippet_forward", "fallback" },
+					["<S-Tab>"] = { "select_prev", "snippet_backward", "fallback" },
+				},
 				appearance = { nerd_font_variant = 'mono' },
 				completion = {
-					documentation = { auto_show = false },
+					list = { selection = { preselect = true, auto_insert = true } },
+					documentation = { auto_show = true },
 					ghost_text = { enabled = true },
-					preselect = true,
-					auto_insert = true,
 				},
 				sources = {
-					default = { 'copilot', 'lsp', 'path', 'snippets', 'buffer' },
+					default = { 'lsp', 'path', 'snippets', 'buffer' },
 					providers = {
-						copilot = {
-							name = "copilot",
-							module = "blink-copilot",
-							score_offset = 10,
-							async = true,
-							fallbacks = {},
-						},
 						lsp = {
 							fallbacks = {},
 						},
 						buffer = {
-							score_offset = -10,
+							score_offset = -100,
 						},
 					},
 				},
@@ -281,78 +279,6 @@ require("lazy").setup({
 			},
 			opts_extend = { "sources.default" },
 		},
-		--[[
-		{
-			"zbirenbaum/copilot-cmp",
-			dependencies = { "zbirenbaum/copilot.lua" },
-			config = function ()
-				require("copilot_cmp").setup()
-			end
-		},
-		{
-			"hrsh7th/nvim-cmp",
-			dependencies = {
-				"hrsh7th/cmp-nvim-lsp",
-				"hrsh7th/cmp-buffer",
-				"hrsh7th/cmp-path",
-				"hrsh7th/cmp-cmdline",
-				"hrsh7th/cmp-vsnip",
-				"hrsh7th/vim-vsnip",
-			},
-			config = function()
-				local cmp = require("cmp")
-				cmp.setup({
-					snippet = {
-						expand = function(args)
-							vim.fn["vsnip#anonymous"](args.body)
-						end,
-					},
-					mapping = cmp.mapping.preset.insert({
-						['<C-b>'] = cmp.mapping.scroll_docs(-4),
-						['<C-f>'] = cmp.mapping.scroll_docs(4),
-						["<C-n>"] = cmp.mapping.select_next_item({ behavior = cmp.SelectBehavior.Insert }),
-						['<Tab>'] = cmp.mapping.select_next_item({ behavior = cmp.SelectBehavior.Insert }),
-						["<C-p>"] = cmp.mapping.select_prev_item({ behavior = cmp.SelectBehavior.Insert }),
-						['<S-Tab>'] = cmp.mapping.select_prev_item({ behavior = cmp.SelectBehavior.Insert }),
-						['<C-Space>'] = cmp.mapping.complete(),
-						['<C-e>'] = cmp.mapping.abort(),
-						['<CR>'] = cmp.mapping.confirm({ select = true }),
-						['<C-j>'] = cmp.mapping.confirm({ select = true }),
-					}),
-					sources = cmp.config.sources({
-						{ name = 'copilot', priority = 1000, max_item_count = 5 },
-						{ name = 'nvim_lsp', priority = 900, max_item_count = 8 },
-						{ name = 'vsnip', priority = 500, max_item_count = 5 },
-						{ name = 'buffer', priority = 300, max_item_count = 8 },
-						{ name = 'path', priority = 200, max_item_count = 5 },
-					}),
-					sorting = {
-						priority_weight = 2,
-						comparators = {
-							require("copilot_cmp.comparators").prioritize,
-							-- Below is the default comparitor list and order for nvim-cmp
-							cmp.config.compare.offset,
-							-- cmp.config.compare.scopes, --this is commented in nvim-cmp too
-							cmp.config.compare.exact,
-							cmp.config.compare.score,
-							cmp.config.compare.recently_used,
-							cmp.config.compare.locality,
-							cmp.config.compare.kind,
-							cmp.config.compare.sort_text,
-							cmp.config.compare.length,
-							cmp.config.compare.order,
-						},
-					},
-					completion = {
-						completeopt = "menu,menuone,noinsert",
-					},
-					experimental = {
-						ghost_text = true,
-					},
-				})
-			end,
-		},
-		--]]
 		{
 			"neovim/nvim-lspconfig",
 			dependencies = {
@@ -403,44 +329,6 @@ require("lazy").setup({
 				vim.lsp.enable("lua_ls")
 			end,
 		},
-		--[[
-		{
-			"github/copilot.vim",
-			config = function()
-				vim.keymap.set('i', '<C-j>', 'copilot#Accept("\\<CR>")', { expr = true, replace_keycodes = false })
-				vim.keymap.set('i', '<C-k>', '<Plug>(copilot-accept-word)')
-				vim.keymap.set('i', '<C-l>', '<Plug>(copilot-accept-line)')
-				vim.keymap.set('i', '<C-h>', '<Plug>(copilot-dismiss)')
-				vim.keymap.set('i', '<A-n>', '<Plug>(copilot-next)')
-				vim.keymap.set('i', '<A-p>', '<Plug>(copilot-previous)')
-				vim.g.copilot_no_tab_map = true
-				vim.g.copilot_workspace_folders = {"H:/L10/server/game", "H:/L10/Development/QnMobile/Assets/Scripts/lua"}
-			end,
-		},
-		{
-			"CopilotC-Nvim/CopilotChat.nvim",
-			dependencies = {
-				"github/copilot.vim",
-				"nvim-lua/plenary.nvim"
-			},
-			opts = {
-				model = "gpt-4o"
-			},
-			keys = {
-				{ "<leader>cc", "<cmd>CopilotChatToggle<cr>", desc = "CopilotChat: Toggle" },
-				{ "<leader>cr", "<cmd>CopilotChatReset<cr>",  desc = "CopilotChat: Reset" },
-				{ "<leader>cs", "<cmd>CopilotChatStop<cr>",   desc = "CopilotChat: Stop" },
-				{ "<leader>cp", "<cmd>CopilotChatPrompts<cr>",  desc = "CopilotChat: Prompts" },
-
-				-- Send selection to chat (visual mode)
-				{ "<leader>ce", mode = "v", "<cmd>CopilotChatExplain<cr>", desc = "CopilotChat: Explain selection" },
-				{ "<leader>cf", mode = "v", "<cmd>CopilotChatFix<cr>",     desc = "CopilotChat: Fix selection" },
-				{ "<leader>co", mode = "v", "<cmd>CopilotChatOptimize<cr>", desc = "CopilotChat: Optimize selection" },
-				{ "<leader>cv", mode = "v", "<cmd>CopilotChatReview<cr>", desc = "CopilotChat: Review selection" },
-				{ "<leader>ct", mode = "v", "<cmd>CopilotChatTests<cr>",   desc = "CopilotChat: Tests for selection" },
-			},
-		},
-		--]]
 	},
 	install = {},
 	checker = {
