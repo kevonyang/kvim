@@ -16,6 +16,9 @@ vim.api.nvim_create_autocmd("VimEnter", {
 	end,
 })
 
+vim.g.loaded_netrw = 1
+vim.g.loaded_netrwPlugin = 1
+
 --------------------------lazy.nvim begin----------------------------
 local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
 if not (vim.uv or vim.loop).fs_stat(lazypath) then
@@ -41,15 +44,8 @@ require("lazy").setup({
 			opts = {},
 		},
 		{
-			"folke/tokyonight.nvim",
-			lazy = false,
-			priority = 1000,
-			opts = {},
-		},
-		{
 			"sainnhe/gruvbox-material",
 			priority = 1000 ,
-			config = true,
 			opts ={},
 			config = function()
 				vim.g.gruvbox_material_background = "soft" -- 背景风格：soft/hard/medium
@@ -58,7 +54,6 @@ require("lazy").setup({
 		},
 		{
 			"nvim-treesitter/nvim-treesitter",
-			lazy = false,
 			build = ':TSUpdate',
 			opts = {
 				ensure_installed = {
@@ -100,13 +95,45 @@ require("lazy").setup({
 			},
 		},
 		{
+			"nvim-tree/nvim-tree.lua",
+			lazy = false,
+			dependencies = {
+				"nvim-tree/nvim-web-devicons",
+			},
+			config = function()
+				require("nvim-tree").setup({
+					sync_root_with_cwd = true,
+					respect_buf_cwd = true,
+					actions = {
+						change_dir = {
+							enable = true,
+							global = true,
+							restrict_above_cwd = false,
+						},
+					},
+					git = {
+						enable = false,
+					},
+					diagnostics = {
+						enable = false,
+					},
+					modified = {
+						enable = false,
+					},
+				})
+
+				vim.keymap.set("n", "<c-n>", ":NvimTreeToggle<CR>", { desc = "Toggle nvim-tree" })
+				vim.keymap.set("n", "<a-n>", ":NvimTreeFindFile<CR>", { desc = "Find current file in nvim-tree" })
+			end,
+		},
+		{
 			"folke/snacks.nvim",
 			priority = 1000,
 			lazy = false,
 			opts = {
 				bigfile = { enabled = true },
 				dashboard = { enabled = true },
-				explorer = { enabled = true },
+				explorer = { enabled = false },
 				indent = { enabled = true },
 				input = { enabled = true },
 				picker = {
@@ -139,7 +166,7 @@ require("lazy").setup({
 				{ "<leader>/", function() Snacks.picker.grep() end, desc = "Grep" },
 				{ "<leader>:", function() Snacks.picker.command_history() end, desc = "Command History" },
 				{ "<leader>n", function() Snacks.picker.notifications() end, desc = "Notification History" },
-				{ "<leader>e", function() Snacks.explorer() end, desc = "File Explorer" },
+				--{ "<leader>e", function() Snacks.explorer() end, desc = "File Explorer" },
 				-- find
 				{ "<leader>fb", function() Snacks.picker.buffers() end, desc = "Buffers" },
 				{ "<leader>fc", function() Snacks.picker.files({ cwd = vim.fn.stdpath("config") }) end, desc = "Find Config File" },
@@ -200,7 +227,7 @@ require("lazy").setup({
 				{ "]]",         function() Snacks.words.jump(vim.v.count1) end, desc = "Next Reference", mode = { "n", "t" } },
 				{ "[[",         function() Snacks.words.jump(-vim.v.count1) end, desc = "Prev Reference", mode = { "n", "t" } },
 
-				{ "<c-e>", function() Snacks.explorer() end, desc = "File Explorer" },
+				--{ "<c-e>", function() Snacks.explorer() end, desc = "File Explorer" },
 				{ "<c-p>", function() Snacks.picker.files() end, desc = "Find Files" },
 				{ "<c-g>", function() Snacks.picker.resume() end, desc = "Resume" },
 				{ "<c-f>", function() Snacks.picker.grep() end, desc = "Grep" },
@@ -223,18 +250,128 @@ require("lazy").setup({
 			}
 		},
 		{
-			"github/copilot.vim",
-			config = function()
-				vim.keymap.set('i', '<C-j>', 'copilot#Accept("\\<CR>")', { expr = true, replace_keycodes = false })
-				vim.keymap.set('i', '<C-k>', '<Plug>(copilot-accept-word)')
-				vim.keymap.set('i', '<C-l>', '<Plug>(copilot-accept-line)')
-				vim.keymap.set('i', '<C-h>', '<Plug>(copilot-dismiss)')
-				vim.keymap.set('i', '<A-n>', '<Plug>(copilot-next)')
-				vim.keymap.set('i', '<A-p>', '<Plug>(copilot-previous)')
-				vim.g.copilot_no_tab_map = true
-				vim.g.copilot_workspace_folders = {"H:/L10/server/game", "H:/L10/Development/QnMobile/Assets/Scripts/lua"}
+			"zbirenbaum/copilot.lua",
+			cmd = "Copilot",
+			event = "InsertEnter",
+			config = function ()
+				require("copilot").setup({
+					suggestion = {
+						enabled = true,
+						auto_trigger = true,
+						debounce = 15,
+						trigger_on_accept = true,
+						keymap = {
+							accept = "<c-j>",
+							accept_word = "<c-k>",
+							accept_line = "<c-l>",
+							next = "<a-n>",
+							prev = "<a-p>",
+							dismiss = "<c-h>",
+						},
+					},
+					panel = {
+						enabled = false,
+					},
+					nes = {
+						enabled = false,
+					},
+				})
 			end,
 		},
+		{
+			"zbirenbaum/copilot-cmp",
+			config = function ()
+				require("copilot_cmp").setup()
+			end
+		},
+		{
+			'MeanderingProgrammer/render-markdown.nvim',
+			dependencies = { 'nvim-treesitter/nvim-treesitter', 'nvim-tree/nvim-web-devicons' },
+			opts = {
+				filetypes = { "codecompanion" },
+			},
+			ft = { "codecompanion" },
+		},
+		{
+			"olimorris/codecompanion.nvim",
+			version = "v19.1.0",
+			dependencies = {
+				"nvim-lua/plenary.nvim",
+				"nvim-treesitter/nvim-treesitter",
+			},
+			opts = {
+				language = "Chinese",
+			},
+			config = function()
+				require("codecompanion").setup({})
+				vim.keymap.set('n', '<leader>cc', "<cmd>CodeCompanionChat Toggle<cr>", { desc = "codecompanion toggle" })
+				vim.keymap.set('v', '<leader>cc', ":CodeCompanion ", { desc = "codecompanion " })
+				vim.keymap.set("n", "<leader>ca", "<cmd>CodeCompanionActions<cr>", { desc = "codecompanion actions" })
+			end,
+		},
+		{
+			"hrsh7th/nvim-cmp",
+			dependencies = {
+				"hrsh7th/cmp-nvim-lsp",
+				"hrsh7th/cmp-buffer",
+				"hrsh7th/cmp-path",
+				"hrsh7th/cmp-cmdline",
+				"hrsh7th/cmp-vsnip",
+				"hrsh7th/vim-vsnip",
+			},
+			config = function()
+				local cmp = require("cmp")
+				cmp.setup({
+					snippet = {
+						expand = function(args)
+							vim.fn["vsnip#anonymous"](args.body)
+						end,
+					},
+					mapping = cmp.mapping.preset.insert({
+						['<C-b>'] = cmp.mapping.scroll_docs(-4),
+						['<C-f>'] = cmp.mapping.scroll_docs(4),
+						["<C-n>"] = cmp.mapping.select_next_item({ behavior = cmp.SelectBehavior.Insert }),
+						["<C-p>"] = cmp.mapping.select_prev_item({ behavior = cmp.SelectBehavior.Insert }),
+						['<Tab>'] = cmp.mapping.select_next_item({ behavior = cmp.SelectBehavior.Insert }),
+						['<S-Tab>'] = cmp.mapping.select_prev_item({ behavior = cmp.SelectBehavior.Insert }),
+						['<C-Space>'] = cmp.mapping.complete(),
+						['<C-e>'] = cmp.mapping.abort(),
+						['<CR>'] = cmp.mapping.confirm({ select = true }),
+					}),
+					sources = cmp.config.sources({
+						{ name = 'copilot', priority = 1000, max_item_count = 5 },
+						{ name = 'nvim_lsp', priority = 900, max_item_count = 8 },
+						{ name = 'vsnip', priority = 500, max_item_count = 5 },
+						{ name = 'buffer', priority = 300, max_item_count = 8 },
+						{ name = 'path', priority = 200, max_item_count = 5 },
+					}),
+					sorting = {
+						priority_weight = 2,
+						comparators = {
+							require("copilot_cmp.comparators").prioritize,
+							-- Below is the default comparitor list and order for nvim-cmp
+							cmp.config.compare.offset,
+							-- cmp.config.compare.scopes, --this is commented in nvim-cmp too
+							cmp.config.compare.exact,
+							cmp.config.compare.score,
+							cmp.config.compare.recently_used,
+							cmp.config.compare.locality,
+							cmp.config.compare.kind,
+							cmp.config.compare.sort_text,
+							cmp.config.compare.length,
+							cmp.config.compare.order,
+						},
+					},
+					completion = {
+						completeopt = "menu,menuone,noinsert",
+					},
+					experimental = {
+						ghost_text = false,
+					},
+				})
+			end,
+		},
+		--[[
 		{
 			"saghen/blink.cmp",
 			version = "v1.9.1",
@@ -262,7 +399,7 @@ require("lazy").setup({
 				completion = {
 					list = { selection = { preselect = true, auto_insert = true } },
 					documentation = { auto_show = true },
-					ghost_text = { enabled = true },
+					ghost_text = { enabled = false },
 				},
 				sources = {
 					default = { 'lsp', 'path', 'snippets', 'buffer' },
@@ -270,15 +407,16 @@ require("lazy").setup({
 						lsp = {
 							fallbacks = {},
 						},
-						buffer = {
-							score_offset = -100,
-						},
+					},
+					per_filetype = {
+						codecompanion = { "codecompanion" },
 					},
 				},
 				fuzzy = { implementation = "prefer_rust" },
 			},
 			opts_extend = { "sources.default" },
 		},
+		--]]
 		{
 			"neovim/nvim-lspconfig",
 			dependencies = {
@@ -301,7 +439,8 @@ require("lazy").setup({
 				})
 				require("mason-tool-installer").setup { ensure_installed = ensure_installed }
 
-				local capabilities = require("blink.cmp").get_lsp_capabilities()
+
+				local capabilities = require('cmp_nvim_lsp').default_capabilities()
 				for name, server in pairs(servers) do
 					server.capabilities = vim.tbl_deep_extend("force", {}, capabilities, server.capabilities or {})
 					vim.lsp.config(name, server)
@@ -319,7 +458,7 @@ require("lazy").setup({
 								library = vim.api.nvim_get_runtime_file("", true),
 								checkThirdParty = false,
 								preloadFileSize = 1500, -- 文件大小阈值
-								maxPreload = 500, -- 预加载文件数量
+								maxPreload = 1000, -- 预加载文件数量
 								ignoreDir = { "node_modules", "engine", "implib" },
 							},
 							telemetry = { enable = false },
@@ -440,28 +579,28 @@ vim.opt.signcolumn = "yes"
 
 vim.opt.backspace = "indent,eol,start"
 
-vim.opt.lines = 50
-vim.opt.columns = 200
-vim.opt.linespace = 1
-
 vim.cmd.colorscheme("gruvbox-material")
 vim.opt.termguicolors = true
 vim.o.background = "dark"
-vim.o.guifont = "FiraCode Nerd Font Mono:h11"
---vim.o.guifont = "JetBrainsMono Nerd Font Mono:h11"
+vim.o.guifont = "JetBrainsMono Nerd Font Mono:h11"
+--vim.o.guifont = "FiraCode Nerd Font Mono:h11"
 --vim.o.guifont = "Consolas:h12"
 vim.opt.title = true
 
 vim.opt.autoread = true
 
 if vim.g.neovide then
+	vim.g.neovide_position_animation_length = 0.00
 	vim.g.neovide_cursor_animation_length = 0
 	vim.g.neovide_cursor_trail_size = 0.0
-	vim.g.neovide_scroll_animation_length = 0.05
-	vim.g.neovide_scroll_animation_far_lines = 1
-	vim.g.neovide_position_animation_length = 0.05
+	vim.g.neovide_scroll_animation_length = 0.0
+	vim.g.neovide_scroll_animation_far_lines = 0
 	vim.g.neovide_cursor_vfx_mode = ""
 	vim.g.neovide_cursor_vfx_opacity = 0.0
+	vim.g.neovide_refresh_rate = 60
+	vim.g.neovide_vsync = false
+	vim.g.neovide_fullscreen = false
+	vim.g.neovide_remember_window_size = true
 end
 --------------------------options end----------------------------
 
