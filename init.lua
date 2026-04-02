@@ -44,6 +44,52 @@ require("lazy").setup({
 			opts = {},
 		},
 		{
+			"akinsho/bufferline.nvim",
+			dependencies = { "nvim-tree/nvim-web-devicons" },
+			lazy = false,
+			opts = {},
+			config = function()
+				require("bufferline").setup({
+					options = {
+						mode = "tabs",
+						numbers = "ordinal",
+						offsets = {
+							{
+								filetype = "NvimTree",
+								text = "File Explorer",
+								text_align = "left",
+								separator = true,
+							},
+						},
+						always_show_bufferline = true,
+					}
+				})
+			end,
+			keys = {
+				{ "<leader>bc", ":BufferLinePickClose<CR>", silent = true, desc = "Close a picked buffer" },
+				{ "<leader>bo", ":BufferLineCloseOthers<CR>", silent = true, desc = "Close other buffers" },
+				{ "<leader>bd", ":bdelete<CR>", silent = true, desc = "Close buffer" },
+				{ "<leader>bh", ":BufferLineCyclePrev<CR>", silent = true, desc = "Previous buffer" },
+				{ "<leader>bl", ":BufferLineCycleNext<CR>", silent = true, desc = "Next buffer" },
+				{ "<leader>bb", ":BufferLinePick<CR>", silent = true,  desc = "Pick a buffer" },
+
+				{ "<a-q>", ":bdelete<CR>", silent = true, desc = "Close buffer" },
+				{ "<a-h>", ":BufferLineCyclePrev<CR>", silent = true, desc = "Previous buffer" },
+				{ "<a-l>", ":BufferLineCycleNext<CR>", silent = true, desc = "Next buffer" },
+				{ "<a-b>", ":BufferLinePick<CR>", silent = true,  desc = "Pick a buffer" },
+				{ "<a-1>", function() require("bufferline").go_to(1, true) end, silent = true, desc = "Go to buffer 1" },
+				{ "<a-2>", function() require("bufferline").go_to(2, true) end, silent = true, desc = "Go to buffer 2" },
+				{ "<a-3>", function() require("bufferline").go_to(3, true) end, silent = true, desc = "Go to buffer 3" },
+				{ "<a-4>", function() require("bufferline").go_to(4, true) end, silent = true, desc = "Go to buffer 4" },
+				{ "<a-5>", function() require("bufferline").go_to(5, true) end, silent = true, desc = "Go to buffer 5" },
+				{ "<a-6>", function() require("bufferline").go_to(6, true) end, silent = true, desc = "Go to buffer 6" },
+				{ "<a-7>", function() require("bufferline").go_to(7, true) end, silent = true, desc = "Go to buffer 7" },
+				{ "<a-8>", function() require("bufferline").go_to(8, true) end, silent = true, desc = "Go to buffer 8" },
+				{ "<a-9>", function() require("bufferline").go_to(9, true) end, silent = true, desc = "Go to buffer 9" },
+				{ "<a-0>", function() require("bufferline").go_to(-1, true) end, silent = true, desc = "Go to last buffer" },
+			},
+		},
+		{
 			"sainnhe/gruvbox-material",
 			priority = 1000 ,
 			opts ={},
@@ -55,23 +101,35 @@ require("lazy").setup({
 		{
 			"nvim-treesitter/nvim-treesitter",
 			build = ':TSUpdate',
-			opts = {
-				ensure_installed = {
+			config = function()
+				local filetypes = {
 					"lua",
+					"vim",
+					"yaml",
+					"markdown",
 					"javascript",
 					"typescript",
 					"python",
-					"vim",
-				},
-			},
-			config = function()
-				require('nvim-treesitter').install({ 'lua', 'javascript' })
+					"json",
+				}
+				require('nvim-treesitter').install(filetypes)
+				vim.api.nvim_create_autocmd('FileType', {
+					pattern = filetypes,
+					callback = function()
+						vim.treesitter.start()
+						vim.wo.foldexpr = 'v:lua.vim.treesitter.foldexpr()'
+						vim.wo.foldmethod = 'expr'
+						vim.bo.indentexpr = "v:lua.require'nvim-treesitter'.indentexpr()"
+					end,
+				})
 			end
 		},
 		{
 			"folke/which-key.nvim",
 			event = "VeryLazy",
-			opts = {},
+			opts = {
+				preset = "modern",
+			},
 			keys = {
 				{
 				  "<leader>?",
@@ -104,6 +162,10 @@ require("lazy").setup({
 				require("nvim-tree").setup({
 					sync_root_with_cwd = true,
 					respect_buf_cwd = true,
+					update_focused_file = {
+						enable = true,
+						update_root = true,             -- 切换 buffer 时 nvim-tree 根目录跟着变
+					},
 					actions = {
 						change_dir = {
 							enable = true,
@@ -127,6 +189,138 @@ require("lazy").setup({
 			end,
 		},
 		{
+			"lukas-reineke/indent-blankline.nvim",
+			main = "ibl",
+			opts = {},
+			config = function()
+				require("ibl").setup({
+					indent = { char = "│" },
+					scope = { enabled = true, char = "│", show_start = true, show_end = true },
+				})
+			end,
+		},
+		{
+			"rcarriga/nvim-notify",
+			config = function()
+				require("notify").setup({
+					timeout = 3000,
+				})
+				vim.notify = require("notify")
+			end,
+		},
+		{
+			"j-hui/fidget.nvim",
+			opts = {
+			},
+			config = function()
+				require("fidget").setup({})
+			end,
+		},
+		{
+			"rmagatti/auto-session",
+			lazy = false,
+			opts = {
+			},
+		},
+		{
+			"nvim-telescope/telescope.nvim", tag = 'v0.2.2',
+			dependencies = {
+				'nvim-lua/plenary.nvim',
+				"nvim-tree/nvim-web-devicons",
+				{
+					'nvim-telescope/telescope-fzf-native.nvim',
+					build = 'cmake -S. -Bbuild -DCMAKE_BUILD_TYPE=Release && cmake --build build --config Release --target install'
+				},
+			},
+			config = function()
+				local telescope = require('telescope')
+				local actions = require('telescope.actions')
+				local layout = require('telescope.actions.layout')
+				telescope.setup({
+					defaults = {
+						file_ignore_patterns = {
+							"node_modules",
+							".git/", ".svn/", ".hg/",
+							"tags", "vendor", "build", "dist",
+							"%.map$", "%.tlog$", "%.meta$", "%.bytes$", "%.bak$",
+							"%.exe$", "%.dll$", "%.o$", "%.obj$", "%.pdb$", "%.lib$",
+							"%.xls$", "%.xlsx$", "%.doc$", "%.docx$", "%.pdf$", "%.ppt$", "%.pptx$",
+							"%.out$",
+						},
+						--preview = { hide_on_startup = true },
+						layout_strategy = 'vertical',
+						mappings = {
+							i = {
+								["<a-p>"] = layout.toggle_preview,
+								["<c-j>"] = actions.move_selection_next,
+								["<c-k>"] = actions.move_selection_previous,
+								["<c-v>"] = function(prompt_bufnr) vim.api.nvim_paste(vim.fn.getreg('+'), true, -1) end,
+							},
+							n = {
+								["<a-p>"] = layout.toggle_preview,
+								["<c-j>"] = actions.move_selection_next,
+								["<c-k>"] = actions.move_selection_previous,
+								["<c-v>"] = function(prompt_bufnr) vim.api.nvim_paste(vim.fn.getreg('+'), true, -1) end,
+							},
+						},
+					},
+					extensions = {
+						fzf = {
+							fuzzy = true,
+							override_generic_sorter = true,
+							override_file_sorter = true,
+							case_mode = "smart_case",
+						}
+					}
+				})
+
+				telescope.load_extension('fzf')
+
+				local builtin = require('telescope.builtin')
+				vim.keymap.set('n', '<leader>ff', builtin.find_files, { desc = 'Telescope find files' })
+				vim.keymap.set('n', '<leader>fg', builtin.live_grep, { desc = 'Telescope live grep' })
+				vim.keymap.set('n', '<leader>fw', builtin.grep_string, { desc = 'Telescope grep string' })
+				vim.keymap.set('n', '<leader>fb', builtin.buffers, { desc = 'Telescope buffers' })
+				vim.keymap.set('n', '<leader>ft', builtin.help_tags, { desc = 'Telescope help tags' })
+				vim.keymap.set('n', '<leader>fh', builtin.search_history, { desc = 'Telescope search history' })
+				vim.keymap.set('n', '<leader>fk', builtin.keymaps, { desc = 'Telescope keymaps' })
+				vim.keymap.set({'n', 'v'}, '<leader>fr', builtin.resume, { desc = 'Resume last telescope' })
+
+				vim.keymap.set('n', '<c-p>', builtin.find_files, { desc = 'Telescope find files' })
+				vim.keymap.set({'n', 'v'}, '<c-f>', builtin.live_grep, { desc = 'Telescope live grep' })
+				vim.keymap.set({'n', 'v'}, '<a-f>', builtin.grep_string, { desc = 'Telescope grep string' })
+				vim.keymap.set('n', '<c-b>', builtin.buffers, { desc = 'Telescope buffers' })
+				vim.keymap.set('n', '<c-g>', builtin.resume, { desc = 'Resume last telescope' })
+			end
+		},
+		--[=[
+		{
+			"folke/noice.nvim",
+			event = "VeryLazy",
+			opts = {},
+			dependencies = {
+				"MunifTanjim/nui.nvim",
+			},
+			config = function()
+				require("noice").setup({
+					lsp = {
+						override = {
+							["vim.lsp.util.convert_input_to_markdown_lines"] = false,
+							["vim.lsp.util.stylize_markdown"] = false,
+							["cmp.entry.get_documentation"] = false,
+						},
+					},
+					presets = {
+						bottom_search = false, -- use a classic bottom cmdline for search
+						command_palette = true, -- position the cmdline and popupmenu together
+						long_message_to_split = true, -- long messages will be sent to a split
+						inc_rename = false, -- enables an input dialog for inc-rename.nvim
+						lsp_doc_border = false, -- add a border to hover docs and signature help
+					},
+				})
+			end
+		},
+		{
 			"folke/snacks.nvim",
 			priority = 1000,
 			lazy = false,
@@ -139,13 +333,18 @@ require("lazy").setup({
 				picker = {
 					enabled = true,
 					ui_select = true,
-					cycle = false,
 					layout = {
+						cycle = false,
 						preset = "vertical",
 					},
 					matcher = {
 						fuzzy = true,
 						smart_case = true,
+						filename_bonus = false,
+
+						cwd_bonus = false, -- give bonus for matching files in the cwd
+						frecency = false, -- frecency bonus
+						history_bonus = false, -- give more weight to chronological order
 					},
 					win = {
 						input = {
@@ -155,9 +354,12 @@ require("lazy").setup({
 						},
 					},
 				},
-				notifier = { enabled = true, timeout = 10000},
+				notifier = { enabled = true, timeout = 5000},
 				quickfile = { enabled = true },
 				scope = { enabled = true },
+				scroll = { enabled = false },
+				statuscolumn = { enabled = false },
+				words = { enabled = false },
 			},
 			keys = {
 				-- Top Pickers & Explorer
@@ -249,6 +451,7 @@ require("lazy").setup({
 				{"<leader>qd", mode = "n", function() require("persistence").stop() end, desc = "stop persistence" },
 			}
 		},
+		--]=]
 		{
 			"zbirenbaum/copilot.lua",
 			cmd = "Copilot",
@@ -258,8 +461,8 @@ require("lazy").setup({
 					suggestion = {
 						enabled = true,
 						auto_trigger = true,
-						debounce = 15,
 						trigger_on_accept = true,
+						debounce = 15,
 						keymap = {
 							accept = "<c-j>",
 							accept_word = "<c-k>",
@@ -278,36 +481,12 @@ require("lazy").setup({
 				})
 			end,
 		},
+		--[[
 		{
 			"zbirenbaum/copilot-cmp",
 			config = function ()
 				require("copilot_cmp").setup()
 			end
-		},
-		{
-			'MeanderingProgrammer/render-markdown.nvim',
-			dependencies = { 'nvim-treesitter/nvim-treesitter', 'nvim-tree/nvim-web-devicons' },
-			opts = {
-				filetypes = { "codecompanion" },
-			},
-			ft = { "codecompanion" },
-		},
-		{
-			"olimorris/codecompanion.nvim",
-			version = "v19.1.0",
-			dependencies = {
-				"nvim-lua/plenary.nvim",
-				"nvim-treesitter/nvim-treesitter",
-			},
-			opts = {
-				language = "Chinese",
-			},
-			config = function()
-				require("codecompanion").setup({})
-				vim.keymap.set('n', '<leader>cc', "<cmd>CodeCompanionChat Toggle<cr>", { desc = "codecompanion toggle" })
-				vim.keymap.set('v', '<leader>cc', ":CodeCompanion ", { desc = "codecompanion " })
-				vim.keymap.set("n", "<leader>ca", "<cmd>CodeCompanionActions<cr>", { desc = "codecompanion actions" })
-			end,
 		},
 		{
 			"hrsh7th/nvim-cmp",
@@ -371,7 +550,7 @@ require("lazy").setup({
 				})
 			end,
 		},
-		--[[
+		--]]
 		{
 			"saghen/blink.cmp",
 			version = "v1.9.1",
@@ -390,10 +569,14 @@ require("lazy").setup({
 				-- C-k: Toggle signature help (if signature.enabled = true)
 				-- See :h blink-cmp-config-keymap for defining your own keymap
 				keymap = {
+					--[[
 					preset = 'default',
 					["<CR>"] = {"accept", "fallback"},
 					["<Tab>"] = { "select_next", "snippet_forward", "fallback" },
 					["<S-Tab>"] = { "select_prev", "snippet_backward", "fallback" },
+					--]]
+
+					preset = 'super-tab',
 				},
 				appearance = { nerd_font_variant = 'mono' },
 				completion = {
@@ -404,9 +587,10 @@ require("lazy").setup({
 				sources = {
 					default = { 'lsp', 'path', 'snippets', 'buffer' },
 					providers = {
-						lsp = {
-							fallbacks = {},
-						},
+						lsp = { max_items = 5, fallbacks = {} },
+						path = { max_items = 5, fallbacks = {} },
+						snippets = { max_items = 5, fallbacks = {} },
+						buffer = { max_items = 5, fallbacks = {} },
 					},
 					per_filetype = {
 						codecompanion = { "codecompanion" },
@@ -416,7 +600,6 @@ require("lazy").setup({
 			},
 			opts_extend = { "sources.default" },
 		},
-		--]]
 		{
 			"neovim/nvim-lspconfig",
 			dependencies = {
@@ -440,7 +623,8 @@ require("lazy").setup({
 				require("mason-tool-installer").setup { ensure_installed = ensure_installed }
 
 
-				local capabilities = require('cmp_nvim_lsp').default_capabilities()
+				--local capabilities = require('cmp_nvim_lsp').default_capabilities()
+				local capabilities = require('blink.cmp').get_lsp_capabilities(capabilities)
 				for name, server in pairs(servers) do
 					server.capabilities = vim.tbl_deep_extend("force", {}, capabilities, server.capabilities or {})
 					vim.lsp.config(name, server)
@@ -466,7 +650,197 @@ require("lazy").setup({
 					},
 				})
 				vim.lsp.enable("lua_ls")
+
+				vim.diagnostic.config({
+					enable = true,
+					virtual_text = false,
+					signs = true,
+					underline = true,
+				})
 			end,
+		},
+		{
+			"olimorris/codecompanion.nvim",
+			--version = "v19.7.0",
+			dependencies = {
+				"nvim-lua/plenary.nvim",
+				"nvim-treesitter/nvim-treesitter",
+				"saghen/blink.cmp",
+			},
+			config = function()
+				require("codecompanion").setup({
+					opts = {
+						language = "Chinese",
+						log_level = "DEBUG",
+					},
+					adapters = {
+						http = {
+							opts = {
+								show_presets = true,
+								show_model_choices = true,
+							},
+							copilot_gpt41_http = function()
+								return require("codecompanion.adapters").extend("copilot", {
+									name = "copilot_gpt41_http",
+									schema = {
+										model = {
+											default = "gpt-4.1",
+										},
+									},
+								})
+							end,
+							copilot_claude_opus46_http = function()
+								return require("codecompanion.adapters").extend("copilot", {
+									name = "copilot_claude_opus46_http",
+									schema = {
+										model = {
+											default = "claude-opus-4.6",
+										},
+									},
+								})
+							end,
+							anthropic_co_http = function()
+								return require("codecompanion.adapters").extend("anthropic", {
+									name = "anthropic_co_http",
+									formatted_name = "Anthropic Co(HTTP)",
+									url = "${url}",
+									env = {
+										api_key = "ANTHROPIC_AUTH_TOKEN",
+										url = "COMPANY_ANTHROPIC_URL",
+									},
+									schema = {
+										model = {
+											default = "claude-sonnet-4-6",
+										},
+									},
+								})
+							end,
+							openai_co_http = function()
+								return require("codecompanion.adapters").extend("openai_compatible", {
+									name = "openai_co_http",
+									formatted_name = "OpenAI Co(HTTP)",
+									env = {
+										api_key = "ANTHROPIC_AUTH_TOKEN",
+										url = "COMPANY_OPENAI_BASE_URL",
+										chat_url = "/v1/chat/completions",
+									},
+									schema = {
+										model = {
+											default = "MiniMax-M2.7",
+										},
+									},
+								})
+							end,
+						},
+						acp = {
+							opencode_acp = function()
+								return require("codecompanion.adapters").extend("opencode", {
+									name = "opencode_acp",
+									formatted_name = "OpenCode ACP",
+								})
+							end,
+							codemaker_acp = function()
+								return require("codecompanion.adapters").extend("opencode", {
+									name = "codemaker_acp",
+									formatted_name = "CodeMaker ACP",
+									commands = {
+										default = {
+											"codemaker", "acp"
+										},
+									},
+								})
+							end,
+							claude_code_co_acp = function()
+								return require("codecompanion.adapters").extend("claude_code", {
+									name = "claude_code_co_acp",
+									formatted_name = "Anthropic Co ACP",
+									defaults = {
+										model = function(self)
+											return "Default"
+										end,
+									},
+								})
+							end,
+						},
+					},
+					interactions = {
+						chat = {
+							adapter = "claude_code_co_acp",
+						},
+						inline = {
+							adapter = "anthropic_co_http",
+						},
+						cmd = {
+							adapter = "anthropic_co_http",
+						},
+						background = {
+							adapter = "anthropic_co_http",
+						},
+						cli = {
+							agent = "claude_code",
+							agents = {
+								claude_code = {
+									cmd = "claude",
+									args = {},
+									description = "Claude Code CLI",
+									provider = "terminal",
+								},
+								opencode = {
+									cmd = "opencode",
+									args = {},
+									description = "OpenCode CLI",
+									provider = "terminal",
+								},
+								codemaker = {
+									cmd = "codemaker",
+									args = {},
+									description = "CodeMaker CLI",
+									provider = "terminal",
+								},
+							},
+							opts = {
+								auto_insert = false,
+								reload = true,
+							},
+						},
+					},
+					prompt_library = {
+						markdown = {
+							dirs = {
+								vim.fn.getcwd() .. "/.prompts",
+								vim.fn.stdpath("config") .. "/prompts",
+							},
+						}
+					},
+				})
+
+				vim.keymap.set({'n', 'v'}, '<leader>cc', function() require("codecompanion").toggle() end, { desc = "codecompanion toggle" })
+
+				vim.keymap.set({'n', 'v'}, '<leader>cn', ":CodeCompanionChat<cr>", { desc = "codecompanion new chat" })
+				--vim.keymap.set({'n', 'v'}, '<leader>co', ":CodeCompanionChat adapter=openai_co_http<cr>", { desc = "codecompanion new chat with openai_co(http)" })
+				--vim.keymap.set({'n', 'v'}, '<leader>co', ":CodeCompanionChat adapter=opencode_acp<cr>", { desc = "codecompanion new chat with opencode(acp)" })
+				--vim.keymap.set({'n', 'v'}, '<leader>cm', ":CodeCompanionChat adapter=codemaker_acp<cr>", { desc = "codecompanion new chat with codemaker(acp)" })
+
+				vim.keymap.set({'n', 'v'}, "<leader>cl", ":CodeCompanionActions<cr>", { desc = "codecompanion list actions" })
+				vim.keymap.set({'n', 'v'}, '<leader>cs', ":CodeCompanion ", { desc = "codecompanion chat buffer send prompt" })
+				vim.keymap.set('v', '<leader>ca', ":CodeCompanionChat Add<cr>", { desc = "codecompanion chat buffer add" })
+
+				vim.keymap.set({'n', 'v'}, '<leader>ci', ":CodeCompanionCLI<cr>", { desc = "codecompanion new cli" })
+				vim.keymap.set({'n', 'v'}, '<leader>cS', ":CodeCompanionCLI! ", { desc = "codecompanion cli send prompt" })
+				vim.keymap.set({'n', 'v'}, "<leader>cA", function() return require("codecompanion").cli("#{this}", { focus = true }) end, { desc = "codecompanion cli add context" })
+				vim.keymap.set({'n', 'v'}, '<leader>cp', function() require("codecompanion").cli({ prompt = true }) end, { desc = "codecompanion cli complex prompt" })
+			end,
+		},
+		{
+			'MeanderingProgrammer/render-markdown.nvim',
+			dependencies = { 'nvim-treesitter/nvim-treesitter', 'nvim-tree/nvim-web-devicons' },
+			ft = { "markdown", "codecompanion" },
+			opts = {
+				anti_conceal = {
+					enabled = true,
+					disabled_modes = {'n'},
+				}
+			},
 		},
 	},
 	install = {},
@@ -539,14 +913,18 @@ vim.api.nvim_create_user_command("AddTags", function()
 	end
 end, { desc = "Manually add Ctags" })
 
-vim.keymap.set("n", "<leader>tg", ":GenerateTags<CR>", { noremap = true, silent = true, desc = "Manually generate tags" })
-vim.keymap.set("n", "<leader>ta", ":AddTags<CR>", { noremap = true, silent = true, desc = "Manually add tags" })
+vim.keymap.set('n', "<leader>tg", ":GenerateTags<CR>", { noremap = true, silent = true, desc = "Manually generate tags" })
+vim.keymap.set('n', "<leader>ta", ":AddTags<CR>", { noremap = true, silent = true, desc = "Manually add tags" })
 --------------------------ctags end----------------------------
 
 --------------------------options begin----------------------------
 vim.opt.number = true
+vim.opt.relativenumber = false
 vim.opt.cursorline = true
---vim.opt.cursorcolumn = true
+vim.opt.cursorcolumn = false
+vim.opt.signcolumn = "yes"
+vim.opt.splitright = true
+vim.opt.splitbelow = true
 vim.opt.mouse = "a"
 vim.opt.clipboard = "unnamedplus"
 
@@ -557,10 +935,10 @@ vim.opt.incsearch = true
 vim.opt.inccommand = "split"
 --vim.opt.wrap = false
 
-vim.opt.autoindent = true
 vim.opt.tabstop = 4
 vim.opt.shiftwidth = 4
 vim.opt.softtabstop = 4
+vim.opt.autoindent = true
 vim.opt.smartindent = true
 
 vim.opt.laststatus = 2
@@ -575,14 +953,13 @@ vim.opt.writebackup = false
 vim.opt.swapfile = false
 vim.opt.undofile = false
 
-vim.opt.signcolumn = "yes"
-
 vim.opt.backspace = "indent,eol,start"
 
 vim.cmd.colorscheme("gruvbox-material")
 vim.opt.termguicolors = true
 vim.o.background = "dark"
-vim.o.guifont = "JetBrainsMono Nerd Font Mono:h11"
+vim.o.guifont = "JetBrainsMonoNL Nerd Font Mono:h11"
+--vim.o.guifont = "JetBrainsMono Nerd Font Mono:h11"
 --vim.o.guifont = "FiraCode Nerd Font Mono:h11"
 --vim.o.guifont = "Consolas:h12"
 vim.opt.title = true
@@ -593,12 +970,13 @@ if vim.g.neovide then
 	vim.g.neovide_position_animation_length = 0.00
 	vim.g.neovide_cursor_animation_length = 0
 	vim.g.neovide_cursor_trail_size = 0.0
+	vim.g.neovide_cursor_smooth_blink = false
 	vim.g.neovide_scroll_animation_length = 0.0
 	vim.g.neovide_scroll_animation_far_lines = 0
 	vim.g.neovide_cursor_vfx_mode = ""
 	vim.g.neovide_cursor_vfx_opacity = 0.0
 	vim.g.neovide_refresh_rate = 60
-	vim.g.neovide_vsync = false
+	vim.g.neovide_vsync = true
 	vim.g.neovide_fullscreen = false
 	vim.g.neovide_remember_window_size = true
 end
@@ -633,6 +1011,8 @@ vim.keymap.set('i', '<a-l>', '<Right>', {silent = true, noremap = true, desc = "
 
 vim.keymap.set('n', '<c-t>', ':tabnew<cr>', {silent = true, noremap = true, desc = "New Tab"})
 
+--vim.keymap.set('t', '<c-t>', '<c-\\><c-n>', { noremap = true, silent = true, desc = "Leave Terminal" })
+
 vim.keymap.set('n', '<a-e>', function()
 	local dir = vim.fn.fnameescape(vim.fn.expand("%:p:h"))
 	dir = string.gsub(dir, "/", "\\")
@@ -658,6 +1038,7 @@ vim.keymap.set('n', '<a-r>', function()
 	for _, process in ipairs(processes) do
 		if path:find(process, 1, true) then
 			vim.cmd("!reload " .. process .. " " .. file)
+			vim.notify("reload " .. process .. " " .. file, vim.log.levels.INFO)
 			return
 		end
 	end
@@ -670,6 +1051,7 @@ vim.keymap.set('n', '<a-c>', function()
 	for _, process in ipairs(processes) do
 		if path:find(process, 1, true) then
 			vim.cmd("!check " .. process .. " " .. file)
+			vim.notify("check " .. process .. " " .. file, vim.log.levels.INFO)
 			return
 		end
 	end
