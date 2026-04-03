@@ -73,7 +73,7 @@ require("lazy").setup({
 				{ "<leader>bl", ":BufferLineCycleNext<CR>", silent = true, desc = "Next buffer" },
 				{ "<leader>bb", ":BufferLinePick<CR>", silent = true,  desc = "Pick a buffer" },
 
-				{ "<a-q>", ":bdelete<CR>", silent = true, desc = "Close buffer" },
+				{ "<a-d>", ":bdelete<CR>", silent = true, desc = "Delete buffer" },
 				{ "<a-h>", ":BufferLineCyclePrev<CR>", silent = true, desc = "Previous buffer" },
 				{ "<a-l>", ":BufferLineCycleNext<CR>", silent = true, desc = "Next buffer" },
 				{ "<a-b>", ":BufferLinePick<CR>", silent = true,  desc = "Pick a buffer" },
@@ -851,7 +851,8 @@ require("lazy").setup({
 })
 --------------------------lazy.nvim end----------------------------
 
---------------------------ctags begin----------------------------
+--------------------------ctags&gtags begin----------------------------
+-- ctags
 vim.api.nvim_create_user_command("GenerateTags", function()
 	local root_dir = vim.fn.getcwd()
 	local tags_dir = vim.fn.stdpath("cache") .. "/ctags"
@@ -897,7 +898,7 @@ vim.api.nvim_create_user_command("GenerateTags", function()
 end, { desc = "Manually generate Ctags" })
 
 vim.api.nvim_create_user_command("AddTags", function()
-	local root_dir = vim.fs.dirname(vim.fn.getcwd())
+	local root_dir = vim.fn.getcwd()
 	local tags_dir = vim.fn.stdpath("cache") .. "/ctags"
 	local project_name = vim.fn.fnamemodify(root_dir, ":t")
 	local tags_path = vim.fn.expand(tags_dir .. "/" .. project_name .. ".tags")
@@ -913,9 +914,105 @@ vim.api.nvim_create_user_command("AddTags", function()
 	end
 end, { desc = "Manually add Ctags" })
 
-vim.keymap.set('n', "<leader>tg", ":GenerateTags<CR>", { noremap = true, silent = true, desc = "Manually generate tags" })
-vim.keymap.set('n', "<leader>ta", ":AddTags<CR>", { noremap = true, silent = true, desc = "Manually add tags" })
---------------------------ctags end----------------------------
+vim.keymap.set('n', "<leader>tG", ":GenerateTags<CR>", { noremap = true, silent = true, desc = "Manually generate tags" })
+vim.keymap.set('n', "<leader>tA", ":AddTags<CR>", { noremap = true, silent = true, desc = "Manually add tags" })
+
+
+--gtags
+vim.api.nvim_create_user_command("GenerateGTags", function()
+	local root_dir = vim.fn.getcwd()
+	local tags_dir = vim.fn.stdpath("cache") .. "/gtags"
+	local project_name = vim.fn.fnamemodify(root_dir, ":t")
+	local tags_path = vim.fn.expand(tags_dir .. "/" .. project_name .. ".gtags")
+	if not vim.loop.fs_stat(tags_path) then
+		vim.fn.mkdir(tags_path, "p") -- "p" 表示递归创建父目录
+	end
+
+	vim.notify("GTags generating: " .. root_dir, vim.log.levels.INFO)
+
+	local stdout = vim.loop.new_pipe(false)
+	local stderr = vim.loop.new_pipe(false)
+
+	vim.loop.spawn("gtags", {
+		args = { "-i", "--skip-symlink", "--gtagsconf="..vim.env.GTAGSCONF, "--gtagslabel="..vim.env.GTAGSLABEL, "-C"..root_dir, tags_path },
+		stdio = { nil, stdout, stderr },
+		cwd = root_dir,
+	}, function(code, signal)
+		stdout:close()
+		stderr:close()
+		vim.schedule(function()
+			if code == 0 then
+				vim.notify("GTags generated successfully: " .. tags_path, vim.log.levels.INFO)
+			else
+				vim.notify("Failed to generate GTags", vim.log.levels.WARN)
+			end
+		end)
+	end)
+
+	vim.loop.read_start(stderr, function(err, data)
+		vim.schedule(function()
+			if err then
+				vim.api.nvim_echo({{"GTags error: " .. err, "WarningMsg"}}, false, {})
+			elseif data then
+				vim.api.nvim_echo({{"GTags error data: " .. data, "WarningMsg"}}, false, {})
+			end
+		end)
+	end)
+end, { desc = "Manually generate GTags" })
+
+vim.api.nvim_create_user_command("AddGTagsPath", function()
+	local root_dir = vim.fn.getcwd()
+	local tags_dir = vim.fn.stdpath("cache") .. "/gtags"
+	local project_name = vim.fn.fnamemodify(root_dir, ":t")
+	local tags_path = vim.fn.expand(tags_dir .. "/" .. project_name .. ".gtags")
+	if vim.loop.fs_stat(tags_path) then
+		if vim.env.GTAGSDBPATH == tags_path then
+			vim.notify("GTags path already added: " .. tags_path, vim.log.levels.INFO)
+		else
+			vim.env.GTAGSDBPATH = tags_path
+			vim.notify("GTags path added successfully: " .. tags_path, vim.log.levels.INFO)
+		end
+	else
+		vim.notify("GTags path not found: " .. tags_path, vim.log.levels.WARN)
+	end
+end, { desc = "Manually add GTags path" })
+
+vim.keymap.set('n', "<leader>tg", ":GenerateGTags<CR>", { noremap = true, silent = true, desc = "Manually generate Gtags" })
+vim.keymap.set('n', "<leader>ta", ":AddGTagsPath<CR>", { noremap = true, silent = true, desc = "Manually add Gtags path" })
+
+local function build_quickfix_list(word, option)
+	local raw = vim.fn.systemlist('global -x ' .. option .. ' ' .. word)
+	local qflist = {}
+	for _, line in ipairs(raw) do
+		local tag, ln, file, rest = line:match("^(%S+)%s+(%d+)%s+([^%s]+)%s+(.*)$")
+		if tag and ln and file then
+			table.insert(qflist, { filename = file, text = rest, lnum = tonumber(ln), col = rest:find(tag, 1, true) or 1 })
+		end
+	end
+	vim.fn.setqflist(qflist, 'r')
+	return #qflist
+end
+vim.keymap.set('n', 'gd', function()
+	local word = vim.fn.expand('<cword>')
+	local cnt = build_quickfix_list(word, '-d')
+	if cnt == 1 then
+		vim.cmd('cfirst')
+	elseif cnt > 1 then
+		vim.cmd('copen')
+	else
+		vim.notify("No Gtags definition found for: " .. word, vim.log.levels.INFO)
+	end
+end, { desc = 'Gtags definition' })
+vim.keymap.set('n', 'gr', function()
+	local word = vim.fn.expand('<cword>')
+	local cnt = build_quickfix_list(word, '-r')
+	if cnt > 0 then
+		vim.cmd('copen')
+	else
+		vim.notify("No Gtags reference found for: " .. word, vim.log.levels.INFO)
+	end
+end, { desc = 'Gtags reference' })
+--------------------------ctags&gtags end----------------------------
 
 --------------------------options begin----------------------------
 vim.opt.number = true
@@ -1012,6 +1109,17 @@ vim.keymap.set('i', '<a-l>', '<Right>', {silent = true, noremap = true, desc = "
 vim.keymap.set('n', '<c-t>', ':tabnew<cr>', {silent = true, noremap = true, desc = "New Tab"})
 
 --vim.keymap.set('t', '<c-t>', '<c-\\><c-n>', { noremap = true, silent = true, desc = "Leave Terminal" })
+
+vim.keymap.set('n', '<a-q>', function()
+	local wins = vim.fn.getwininfo()
+	for _, win in ipairs(wins) do
+		if win.quickfix == 1 then
+			vim.cmd('cclose')
+			return
+		end
+	end
+	vim.cmd('copen')
+end, {silent = true, noremap = true, desc = "Toggle Quickfix"})
 
 vim.keymap.set('n', '<a-e>', function()
 	local dir = vim.fn.fnameescape(vim.fn.expand("%:p:h"))
