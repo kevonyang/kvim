@@ -164,13 +164,18 @@ require("lazy").setup({
 					respect_buf_cwd = true,
 					update_focused_file = {
 						enable = true,
-						update_root = true,             -- 切换 buffer 时 nvim-tree 根目录跟着变
+						update_root = false,             -- 切换 buffer 时 nvim-tree 根目录跟着变
 					},
 					actions = {
 						change_dir = {
 							enable = true,
 							global = true,
 							restrict_above_cwd = false,
+						},
+						open_file = {
+							window_picker = {
+								enable = false,
+							},
 						},
 					},
 					git = {
@@ -188,14 +193,17 @@ require("lazy").setup({
 				vim.keymap.set("n", "<a-n>", ":NvimTreeFindFile<CR>", { desc = "Find current file in nvim-tree" })
 			end,
 		},
+		--[=[
 		{
 			"lukas-reineke/indent-blankline.nvim",
 			main = "ibl",
 			opts = {},
 			config = function()
 				require("ibl").setup({
-					indent = { char = "│" },
+					exclude = { filetypes = {} },
+					indent = { char = "│", smart_indent_cap = true },
 					scope = { enabled = true, char = "│", show_start = true, show_end = true },
+					whitespace = { remove_blankline_trail = false },
 				})
 			end,
 		},
@@ -208,6 +216,7 @@ require("lazy").setup({
 				vim.notify = require("notify")
 			end,
 		},
+		--]=]
 		{
 			"j-hui/fidget.nvim",
 			opts = {
@@ -215,83 +224,6 @@ require("lazy").setup({
 			config = function()
 				require("fidget").setup({})
 			end,
-		},
-		{
-			"rmagatti/auto-session",
-			lazy = false,
-			opts = {
-			},
-		},
-		{
-			"nvim-telescope/telescope.nvim", tag = 'v0.2.2',
-			dependencies = {
-				'nvim-lua/plenary.nvim',
-				"nvim-tree/nvim-web-devicons",
-				{
-					'nvim-telescope/telescope-fzf-native.nvim',
-					build = 'cmake -S. -Bbuild -DCMAKE_BUILD_TYPE=Release && cmake --build build --config Release --target install'
-				},
-			},
-			config = function()
-				local telescope = require('telescope')
-				local actions = require('telescope.actions')
-				local layout = require('telescope.actions.layout')
-				telescope.setup({
-					defaults = {
-						file_ignore_patterns = {
-							"node_modules",
-							".git/", ".svn/", ".hg/",
-							"tags", "vendor", "build", "dist",
-							"%.map$", "%.tlog$", "%.meta$", "%.bytes$", "%.bak$",
-							"%.exe$", "%.dll$", "%.o$", "%.obj$", "%.pdb$", "%.lib$",
-							"%.xls$", "%.xlsx$", "%.doc$", "%.docx$", "%.pdf$", "%.ppt$", "%.pptx$",
-							"%.out$",
-						},
-						--preview = { hide_on_startup = true },
-						layout_strategy = 'vertical',
-						mappings = {
-							i = {
-								["<a-p>"] = layout.toggle_preview,
-								["<c-j>"] = actions.move_selection_next,
-								["<c-k>"] = actions.move_selection_previous,
-								["<c-v>"] = function(prompt_bufnr) vim.api.nvim_paste(vim.fn.getreg('+'), true, -1) end,
-							},
-							n = {
-								["<a-p>"] = layout.toggle_preview,
-								["<c-j>"] = actions.move_selection_next,
-								["<c-k>"] = actions.move_selection_previous,
-								["<c-v>"] = function(prompt_bufnr) vim.api.nvim_paste(vim.fn.getreg('+'), true, -1) end,
-							},
-						},
-					},
-					extensions = {
-						fzf = {
-							fuzzy = true,
-							override_generic_sorter = true,
-							override_file_sorter = true,
-							case_mode = "smart_case",
-						}
-					}
-				})
-
-				telescope.load_extension('fzf')
-
-				local builtin = require('telescope.builtin')
-				vim.keymap.set('n', '<leader>ff', builtin.find_files, { desc = 'Telescope find files' })
-				vim.keymap.set('n', '<leader>fg', builtin.live_grep, { desc = 'Telescope live grep' })
-				vim.keymap.set('n', '<leader>fw', builtin.grep_string, { desc = 'Telescope grep string' })
-				vim.keymap.set('n', '<leader>fb', builtin.buffers, { desc = 'Telescope buffers' })
-				vim.keymap.set('n', '<leader>ft', builtin.help_tags, { desc = 'Telescope help tags' })
-				vim.keymap.set('n', '<leader>fh', builtin.search_history, { desc = 'Telescope search history' })
-				vim.keymap.set('n', '<leader>fk', builtin.keymaps, { desc = 'Telescope keymaps' })
-				vim.keymap.set({'n', 'v'}, '<leader>fr', builtin.resume, { desc = 'Resume last telescope' })
-
-				vim.keymap.set('n', '<c-p>', builtin.find_files, { desc = 'Telescope find files' })
-				vim.keymap.set({'n', 'v'}, '<c-f>', builtin.live_grep, { desc = 'Telescope live grep' })
-				vim.keymap.set({'n', 'v'}, '<a-f>', builtin.grep_string, { desc = 'Telescope grep string' })
-				vim.keymap.set('n', '<c-b>', builtin.buffers, { desc = 'Telescope buffers' })
-				vim.keymap.set('n', '<c-g>', builtin.resume, { desc = 'Resume last telescope' })
-			end
 		},
 		--[=[
 		{
@@ -320,6 +252,110 @@ require("lazy").setup({
 				})
 			end
 		},
+		--]=]
+		{
+			"rmagatti/auto-session",
+			lazy = false,
+			keys = {
+				{ "<leader>wr", "<cmd>AutoSession search<CR>", desc = "Session search" },
+				{ "<leader>ws", "<cmd>AutoSession save<CR>", desc = "Save session" },
+				{ "<leader>wa", "<cmd>AutoSession toggle<CR>", desc = "Toggle autosave" },
+			},
+			opts = {
+			},
+		},
+		--[=[
+		{
+			"folke/persistence.nvim",
+			event = "BufReadPre", -- this will only start session saving when an actual file was opened
+			opts = {},
+			keys = {
+				-- load the session for the current directory
+				{"<leader>qs", mode = "n", function() require("persistence").load() end, desc = "load session for current dir" },
+				-- select a session to load
+				{"<leader>qS", mode = "n", function() require("persistence").select() end, desc = "select session to load" },
+				-- load the last session
+				{"<leader>ql", mode = "n", function() require("persistence").load({ last = true }) end, desc = "load last session" },
+				-- stop Persistence => session won't be saved on exit
+				{"<leader>qd", mode = "n", function() require("persistence").stop() end, desc = "stop persistence" },
+			}
+		},
+		--]=]
+		--[=[
+		{
+			"nvim-telescope/telescope.nvim", tag = 'v0.2.2',
+			dependencies = {
+				'nvim-lua/plenary.nvim',
+				"nvim-tree/nvim-web-devicons",
+				{
+					'nvim-telescope/telescope-fzf-native.nvim',
+					build = 'cmake -S. -Bbuild -DCMAKE_BUILD_TYPE=Release && cmake --build build --config Release --target install'
+				},
+				"nvim-telescope/telescope-ui-select.nvim",
+			},
+			config = function()
+				local telescope = require('telescope')
+				local actions = require('telescope.actions')
+				local layout = require('telescope.actions.layout')
+				telescope.setup({
+					defaults = {
+						file_ignore_patterns = {
+							"node_modules/", ".git/", ".svn/",
+							"%.map$", "%.tlog$", "%.meta$", "%.bytes$", "%.bak$",
+							"%.exe$", "%.dll$", "%.o$", "%.obj$", "%.pdb$", "%.lib$", "%.out$",
+							"%.xls$", "%.xlsx$", "%.doc$", "%.docx$", "%.pdf$", "%.ppt$", "%.pptx$",
+						},
+						--preview = { hide_on_startup = true },
+						layout_strategy = 'vertical',
+						mappings = {
+							i = {
+								["<a-p>"] = layout.toggle_preview,
+								["<c-j>"] = actions.move_selection_next,
+								["<c-k>"] = actions.move_selection_previous,
+								["<c-v>"] = function(prompt_bufnr) vim.api.nvim_paste(vim.fn.getreg('+'), true, -1) end,
+							},
+							n = {
+								["<a-p>"] = layout.toggle_preview,
+								["<c-j>"] = actions.move_selection_next,
+								["<c-k>"] = actions.move_selection_previous,
+								["<c-v>"] = function(prompt_bufnr) vim.api.nvim_paste(vim.fn.getreg('+'), true, -1) end,
+							},
+						},
+					},
+					extensions = {
+						["fzf"] = {
+							fuzzy = true,
+							override_generic_sorter = true,
+							override_file_sorter = true,
+							case_mode = "smart_case",
+						},
+						["ui-select"] = {
+							require("telescope.themes").get_dropdown({}),
+						},
+					}
+				})
+
+				telescope.load_extension('fzf')
+				telescope.load_extension("ui-select")
+
+				local builtin = require('telescope.builtin')
+				vim.keymap.set('n', '<leader>ff', builtin.find_files, { desc = 'Telescope find files' })
+				vim.keymap.set('n', '<leader>fg', builtin.live_grep, { desc = 'Telescope live grep' })
+				vim.keymap.set('n', '<leader>fw', builtin.grep_string, { desc = 'Telescope grep string' })
+				vim.keymap.set('n', '<leader>fb', builtin.buffers, { desc = 'Telescope buffers' })
+				vim.keymap.set('n', '<leader>ft', builtin.help_tags, { desc = 'Telescope help tags' })
+				vim.keymap.set('n', '<leader>fh', builtin.search_history, { desc = 'Telescope search history' })
+				vim.keymap.set('n', '<leader>fk', builtin.keymaps, { desc = 'Telescope keymaps' })
+				vim.keymap.set({'n', 'v'}, '<leader>fr', builtin.resume, { desc = 'Resume last telescope' })
+
+				vim.keymap.set('n', '<c-p>', builtin.find_files, { desc = 'Telescope find files' })
+				vim.keymap.set({'n', 'v'}, '<c-f>', builtin.live_grep, { desc = 'Telescope live grep' })
+				vim.keymap.set({'n', 'v'}, '<a-f>', builtin.grep_string, { desc = 'Telescope grep string' })
+				vim.keymap.set('n', '<c-b>', builtin.buffers, { desc = 'Telescope buffers' })
+				vim.keymap.set('n', '<c-g>', builtin.resume, { desc = 'Resume last telescope' })
+			end
+		},
+		--]=]
 		{
 			"folke/snacks.nvim",
 			priority = 1000,
@@ -336,11 +372,14 @@ require("lazy").setup({
 					layout = {
 						cycle = false,
 						preset = "vertical",
+						layout = {
+							width = 0.7,
+						}
 					},
 					matcher = {
 						fuzzy = true,
 						smart_case = true,
-						filename_bonus = false,
+						filename_bonus = true,
 
 						cwd_bonus = false, -- give bonus for matching files in the cwd
 						frecency = false, -- frecency bonus
@@ -433,25 +472,11 @@ require("lazy").setup({
 				{ "<c-p>", function() Snacks.picker.files() end, desc = "Find Files" },
 				{ "<c-g>", function() Snacks.picker.resume() end, desc = "Resume" },
 				{ "<c-f>", function() Snacks.picker.grep() end, desc = "Grep" },
+				{ "<c-f>", function() Snacks.picker.grep({ search = vim.fn.getreg('"') }) end, desc = "Grep Selection", mode = "x" },
 				{ "<a-f>", function() Snacks.picker.grep_word() end, desc = "Visual selection or word", mode = { "n", "x" } },
+				{ "<c-b>", function() Snacks.picker.buffers() end, desc = "Buffers" },
 			},
 		},
-		{
-			"folke/persistence.nvim",
-			event = "BufReadPre", -- this will only start session saving when an actual file was opened
-			opts = {},
-			keys = {
-				-- load the session for the current directory
-				{"<leader>qs", mode = "n", function() require("persistence").load() end, desc = "load session for current dir" },
-				-- select a session to load
-				{"<leader>qS", mode = "n", function() require("persistence").select() end, desc = "select session to load" },
-				-- load the last session
-				{"<leader>ql", mode = "n", function() require("persistence").load({ last = true }) end, desc = "load last session" },
-				-- stop Persistence => session won't be saved on exit
-				{"<leader>qd", mode = "n", function() require("persistence").stop() end, desc = "stop persistence" },
-			}
-		},
-		--]=]
 		{
 			"zbirenbaum/copilot.lua",
 			cmd = "Copilot",
@@ -641,9 +666,9 @@ require("lazy").setup({
 							workspace = {
 								library = vim.api.nvim_get_runtime_file("", true),
 								checkThirdParty = false,
-								preloadFileSize = 1500, -- 文件大小阈值
+								preloadFileSize = 1000, -- 文件大小阈值
 								maxPreload = 1000, -- 预加载文件数量
-								ignoreDir = { "node_modules", "engine", "implib" },
+								ignoreDir = { "node_modules", "engine", "implib", "design" },
 							},
 							telemetry = { enable = false },
 						},
@@ -837,8 +862,7 @@ require("lazy").setup({
 			ft = { "markdown", "codecompanion" },
 			opts = {
 				anti_conceal = {
-					enabled = true,
-					disabled_modes = {'n'},
+					enabled = false,
 				}
 			},
 		},
@@ -942,6 +966,8 @@ vim.api.nvim_create_user_command("GenerateGTags", function()
 		stderr:close()
 		vim.schedule(function()
 			if code == 0 then
+				vim.env.GTAGSDBPATH = tags_path
+				vim.env.GTAGSROOT = root_dir
 				vim.notify("GTags generated successfully: " .. tags_path, vim.log.levels.INFO)
 			else
 				vim.notify("Failed to generate GTags", vim.log.levels.WARN)
@@ -970,6 +996,7 @@ vim.api.nvim_create_user_command("AddGTagsPath", function()
 			vim.notify("GTags path already added: " .. tags_path, vim.log.levels.INFO)
 		else
 			vim.env.GTAGSDBPATH = tags_path
+			vim.env.GTAGSROOT = root_dir
 			vim.notify("GTags path added successfully: " .. tags_path, vim.log.levels.INFO)
 		end
 	else
@@ -1051,6 +1078,8 @@ vim.opt.swapfile = false
 vim.opt.undofile = false
 
 vim.opt.backspace = "indent,eol,start"
+vim.opt.list = false
+vim.opt.listchars = { trail = "·", tab = "→ " }
 
 vim.cmd.colorscheme("gruvbox-material")
 vim.opt.termguicolors = true
