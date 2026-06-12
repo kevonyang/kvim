@@ -472,7 +472,6 @@ require("lazy").setup({
 				{ "<c-p>", function() Snacks.picker.files() end, desc = "Find Files" },
 				{ "<c-g>", function() Snacks.picker.resume() end, desc = "Resume" },
 				{ "<c-f>", function() Snacks.picker.grep() end, desc = "Grep" },
-				{ "<c-f>", function() Snacks.picker.grep({ search = vim.fn.getreg('"') }) end, desc = "Grep Selection", mode = "x" },
 				{ "<a-f>", function() Snacks.picker.grep_word() end, desc = "Visual selection or word", mode = { "n", "x" } },
 				{ "<c-b>", function() Snacks.picker.buffers() end, desc = "Buffers" },
 			},
@@ -503,6 +502,20 @@ require("lazy").setup({
 					nes = {
 						enabled = false,
 					},
+				})
+
+				-- copilot.lua 的 client 模块在 "copilot.client" augroup 下注册了 VimLeavePre
+				-- 做 graceful shutdown, 在 Windows 上会卡在 sqlite finalizer。
+				-- 先清掉它的 VimLeavePre, 再用 force-stop 替换。
+				vim.api.nvim_clear_autocmds({ group = "copilot.client", event = "VimLeavePre" })
+				vim.api.nvim_create_autocmd("VimLeavePre", {
+					group = "copilot.client",
+					callback = function()
+						for _, c in ipairs(vim.lsp.get_clients({ name = "copilot" })) do
+							c:stop(true)
+						end
+					end,
+					desc = "[copilot] force-kill LSP on exit (workaround sqlite finalizer hang on Windows)",
 				})
 			end,
 		},
@@ -600,7 +613,6 @@ require("lazy").setup({
 					["<Tab>"] = { "select_next", "snippet_forward", "fallback" },
 					["<S-Tab>"] = { "select_prev", "snippet_backward", "fallback" },
 					--]]
-
 					preset = 'super-tab',
 				},
 				appearance = { nerd_font_variant = 'mono' },
@@ -652,23 +664,23 @@ require("lazy").setup({
 				local capabilities = require('blink.cmp').get_lsp_capabilities(capabilities)
 				for name, server in pairs(servers) do
 					server.capabilities = vim.tbl_deep_extend("force", {}, capabilities, server.capabilities or {})
+					server.root_markers = server.root_markers or { ".project" }
 					vim.lsp.config(name, server)
 					vim.lsp.enable(name)
 				end
 
+				-- lua_ls 极简配置：只做单文件语法检查，降低内存
 				vim.lsp.config("lua_ls", {
 					filetypes = { "lua" },
-					root_markers = { ".project", ".luarc.json", ".luarc.jsonc" },
 					settings = {
 						Lua = {
-							runtime = { version = "LuaJIT", path = vim.split(package.path, ";") }, -- Lua 运行时
-							diagnostics = { globals = { "vim" } }, -- 忽略全局变量 vim 的警告
+							runtime = { version = "LuaJIT" },
+							diagnostics = { globals = { "vim" } },
 							workspace = {
-								library = vim.api.nvim_get_runtime_file("", true),
+								-- library = vim.api.nvim_get_runtime_file("", true),
 								checkThirdParty = false,
-								preloadFileSize = 1000, -- 文件大小阈值
-								maxPreload = 1000, -- 预加载文件数量
-								ignoreDir = { "node_modules", "engine", "implib", "design" },
+								preloadFileSize = 0,
+								maxPreload = 0,
 							},
 							telemetry = { enable = false },
 						},
@@ -696,14 +708,19 @@ require("lazy").setup({
 				require("codecompanion").setup({
 					opts = {
 						language = "Chinese",
-						log_level = "DEBUG",
+						log_level = "error",
+					},
+					display = {
+						chat = {
+						},
 					},
 					adapters = {
 						http = {
 							opts = {
-								show_presets = true,
+								show_presets = false,
 								show_model_choices = true,
 							},
+							--[[
 							copilot_gpt41_http = function()
 								return require("codecompanion.adapters").extend("copilot", {
 									name = "copilot_gpt41_http",
@@ -724,10 +741,11 @@ require("lazy").setup({
 									},
 								})
 							end,
-							anthropic_co_http = function()
+							--]]
+							anthropic_http = function()
 								return require("codecompanion.adapters").extend("anthropic", {
-									name = "anthropic_co_http",
-									formatted_name = "Anthropic Co(HTTP)",
+									name = "anthropic_http",
+									formatted_name = "Anthropic(HTTP)",
 									url = "${url}",
 									env = {
 										api_key = "ANTHROPIC_AUTH_TOKEN",
@@ -740,9 +758,9 @@ require("lazy").setup({
 									},
 								})
 							end,
-							openai_co_http = function()
+							openai_http = function()
 								return require("codecompanion.adapters").extend("openai_compatible", {
-									name = "openai_co_http",
+									name = "openai_http",
 									formatted_name = "OpenAI Co(HTTP)",
 									env = {
 										api_key = "ANTHROPIC_AUTH_TOKEN",
@@ -751,55 +769,49 @@ require("lazy").setup({
 									},
 									schema = {
 										model = {
-											default = "MiniMax-M2.7",
+											default = "deepseek-v4-pro",
 										},
 									},
 								})
 							end,
 						},
 						acp = {
-							opencode_acp = function()
-								return require("codecompanion.adapters").extend("opencode", {
-									name = "opencode_acp",
-									formatted_name = "OpenCode ACP",
-								})
-							end,
-							codemaker_acp = function()
-								return require("codecompanion.adapters").extend("opencode", {
-									name = "codemaker_acp",
-									formatted_name = "CodeMaker ACP",
-									commands = {
-										default = {
-											"codemaker", "acp"
-										},
-									},
-								})
-							end,
-							claude_code_co_acp = function()
-								return require("codecompanion.adapters").extend("claude_code", {
-									name = "claude_code_co_acp",
-									formatted_name = "Anthropic Co ACP",
+							opts = {
+								show_presets = false,
+								show_model_choices = true,
+							},
+							claude_code_acp = function()
+								return require("codecompanion.adapters.acp").extend("claude_code", {
+									name = "claude_code_acp",
+									formatted_name = "Anthropic ACP",
 									defaults = {
 										model = function(self)
-											return "Default"
+											return "sonnet"
 										end,
+										mcpServers = "inherit_from_config",
 									},
+								})
+							end,
+							opencode_acp = function()
+								return require("codecompanion.adapters.acp").extend("opencode", {
+									name = "opencode_acp",
+									formatted_name = "OpenCode ACP",
 								})
 							end,
 						},
 					},
 					interactions = {
 						chat = {
-							adapter = "claude_code_co_acp",
+							adapter = "claude_code_acp",
 						},
 						inline = {
-							adapter = "anthropic_co_http",
+							adapter = "anthropic_http",
 						},
 						cmd = {
-							adapter = "anthropic_co_http",
+							adapter = "anthropic_http",
 						},
 						background = {
-							adapter = "anthropic_co_http",
+							adapter = "anthropic_http",
 						},
 						cli = {
 							agent = "claude_code",
@@ -814,12 +826,6 @@ require("lazy").setup({
 									cmd = "opencode",
 									args = {},
 									description = "OpenCode CLI",
-									provider = "terminal",
-								},
-								codemaker = {
-									cmd = "codemaker",
-									args = {},
-									description = "CodeMaker CLI",
 									provider = "terminal",
 								},
 							},
@@ -842,9 +848,8 @@ require("lazy").setup({
 				vim.keymap.set({'n', 'v'}, '<leader>cc', function() require("codecompanion").toggle() end, { desc = "codecompanion toggle" })
 
 				vim.keymap.set({'n', 'v'}, '<leader>cn', ":CodeCompanionChat<cr>", { desc = "codecompanion new chat" })
-				--vim.keymap.set({'n', 'v'}, '<leader>co', ":CodeCompanionChat adapter=openai_co_http<cr>", { desc = "codecompanion new chat with openai_co(http)" })
+				--vim.keymap.set({'n', 'v'}, '<leader>co', ":CodeCompanionChat adapter=openai_http<cr>", { desc = "codecompanion new chat with openai(http)" })
 				--vim.keymap.set({'n', 'v'}, '<leader>co', ":CodeCompanionChat adapter=opencode_acp<cr>", { desc = "codecompanion new chat with opencode(acp)" })
-				--vim.keymap.set({'n', 'v'}, '<leader>cm', ":CodeCompanionChat adapter=codemaker_acp<cr>", { desc = "codecompanion new chat with codemaker(acp)" })
 
 				vim.keymap.set({'n', 'v'}, "<leader>cl", ":CodeCompanionActions<cr>", { desc = "codecompanion list actions" })
 				vim.keymap.set({'n', 'v'}, '<leader>cs', ":CodeCompanion ", { desc = "codecompanion chat buffer send prompt" })
@@ -861,6 +866,7 @@ require("lazy").setup({
 			dependencies = { 'nvim-treesitter/nvim-treesitter', 'nvim-tree/nvim-web-devicons' },
 			ft = { "markdown", "codecompanion" },
 			opts = {
+				file_types = {"markdown", "codecompanion" },
 				anti_conceal = {
 					enabled = false,
 				}
@@ -1065,7 +1071,7 @@ vim.opt.softtabstop = 4
 vim.opt.autoindent = true
 vim.opt.smartindent = true
 
-vim.opt.laststatus = 2
+vim.opt.laststatus = 3
 
 vim.opt.foldmethod = "indent"
 vim.opt.foldenable = false
