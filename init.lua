@@ -5,14 +5,21 @@ vim.g.maplocalleader = ' '
 -- 禁用 Space 本身（普通+可视）
 vim.keymap.set({'n','v'}, '<Space>', '<Nop>', { silent = true })
 
--- 打开文件时自动切换到该文件所在目录
+-- 打开文件时切到文件所在目录，打开目录时切到该目录
 vim.api.nvim_create_autocmd("VimEnter", {
 	callback = function()
 		local argc = vim.fn.argc()
 		if argc == 0 then return end
-		local dir = vim.fn.expand("%:p:h")
-		if dir == "" then return end
-		vim.cmd("lcd "..vim.fn.fnameescape(dir))
+		local arg = vim.fn.argv(0)
+		local stat = vim.loop.fs_stat(arg)
+		if stat and stat.type == "directory" then
+			vim.cmd("cd " .. vim.fn.fnameescape(arg))
+		else
+			local dir = vim.fn.expand("%:p:h")
+			if dir ~= "" then
+				vim.cmd("cd " .. vim.fn.fnameescape(dir))
+			end
+		end
 	end,
 })
 
@@ -161,10 +168,10 @@ require("lazy").setup({
 			config = function()
 				require("nvim-tree").setup({
 					sync_root_with_cwd = true,
-					respect_buf_cwd = true,
+					respect_buf_cwd = false,
 					update_focused_file = {
 						enable = true,
-						update_root = false,             -- 切换 buffer 时 nvim-tree 根目录跟着变
+						update_root = false,
 					},
 					actions = {
 						change_dir = {
@@ -720,28 +727,6 @@ require("lazy").setup({
 								show_presets = false,
 								show_model_choices = true,
 							},
-							--[[
-							copilot_gpt41_http = function()
-								return require("codecompanion.adapters").extend("copilot", {
-									name = "copilot_gpt41_http",
-									schema = {
-										model = {
-											default = "gpt-4.1",
-										},
-									},
-								})
-							end,
-							copilot_claude_opus46_http = function()
-								return require("codecompanion.adapters").extend("copilot", {
-									name = "copilot_claude_opus46_http",
-									schema = {
-										model = {
-											default = "claude-opus-4.6",
-										},
-									},
-								})
-							end,
-							--]]
 							anthropic_http = function()
 								return require("codecompanion.adapters").extend("anthropic", {
 									name = "anthropic_http",
